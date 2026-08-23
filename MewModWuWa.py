@@ -983,6 +983,19 @@ class MewModAPI:
         threading.Thread(target=self._fix_all_worker_adv, args=(derived_hashes, stable_texture, rendering33), daemon=True).start()
         return {"started": True}
 
+    def reload_wwmi_mods(self):
+        try:
+            import ctypes
+            # VK_F10 = 0x79
+            ctypes.windll.user32.keybd_event(0x79, 0, 0, 0)
+            time.sleep(0.05)
+            ctypes.windll.user32.keybd_event(0x79, 0, 2, 0)
+            self.log("🔄 Đã gửi phím [F10] nạp lại toàn bộ Mod trực tiếp trong game (WWMI)!")
+            return {"success": True}
+        except Exception as e:
+            self.log(f"⚠️ Lỗi gửi lệnh F10: {e}")
+            return {"success": False}
+
     def _fix_all_worker_adv(self, derived_hashes, stable_texture, rendering33):
         if not os.path.exists(WUWA_MOD_FIXER_EXE):
             self.log("❌ Không tìm thấy WuWa Mod Fixer!")
@@ -1497,7 +1510,7 @@ HTML_TEMPLATE = """
       <div class="brand-logo">🐾</div>
       <div>
         <div class="brand-title">MEWMOD WUWA</div>
-        <div class="brand-sub">Siêu Trung Tâm Mod Skin Tối Thượng (Full JASM & MODORA)</div>
+        <div class="brand-sub">Trình Quản Lý & Nạp Mod Wuthering Waves Độc Lập</div>
       </div>
     </div>
 
@@ -1505,20 +1518,18 @@ HTML_TEMPLATE = """
       <button class="nav-btn" id="tab-gb" onclick="switchStore('gamebanana')">🌐 GameBanana</button>
       <button class="nav-btn" id="tab-hh" onclick="switchStore('huihui168')">🇨🇳 Huihui168</button>
       <button class="nav-btn" id="tab-nx" onclick="switchStore('nexus')">🎮 NexusMods</button>
-      <button class="nav-btn active" id="tab-inst" onclick="switchView('installed')">📁 Quản Lý Skin Đã Cài</button>
+      <button class="nav-btn active" id="tab-inst" onclick="switchView('installed')">📁 Quản Lý Mod Đã Cài</button>
       <button class="nav-btn" id="tab-imp" onclick="switchView('direct_link')">⚡ Nạp Bằng Link</button>
     </div>
 
     <div class="actions">
-      <button class="btn-action" style="color: #fab387;" onclick="openFixerModal()">🔧 Sửa Lỗi Mod (Việt Hóa)</button>
+      <button class="btn-action" style="color: #fab387;" onclick="openFixerModal()">🔧 Sửa Lỗi Mod</button>
+      <button class="btn-action" style="color: #89dceb;" onclick="pywebview.api.reload_wwmi_mods()">🔄 Nạp Lại (F10)</button>
       <button class="btn-action" onclick="pywebview.api.open_folder('')">📂 Thư Mục Mods</button>
-      <button class="btn-action" style="background: #89dceb; color: #11111b;" onclick="pywebview.api.launch_modora()">🚀 MODORA</button>
-      <button class="btn-action btn-jasm" onclick="pywebview.api.launch_jasm()">🎨 JASM</button>
       <button class="btn-action btn-game" onclick="pywebview.api.launch_game()">🎮 Chạy Game (WWMI)</button>
     </div>
-
-
   </header>
+
 
   <!-- MAIN CONTAINER -->
   <div class="main-container">
