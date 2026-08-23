@@ -43,6 +43,11 @@ WWMI_MODS_PATH = os.path.join(WWMI_PATH, "mods")
 WWMI_CHAR_PATH = os.path.join(WWMI_MODS_PATH, "character")
 os.makedirs(WWMI_CHAR_PATH, exist_ok=True)
 
+AVATARS_DIR = os.path.join(getattr(sys, '_MEIPASS', BASE_DIR), "avatars")
+if not os.path.exists(AVATARS_DIR):
+    AVATARS_DIR = os.path.join(BASE_DIR, "avatars")
+os.makedirs(AVATARS_DIR, exist_ok=True)
+
 PRESETS_FILE = os.path.join(BASE_DIR, "mewmod_presets.json")
 
 JASM_DIR = os.path.join(BASE_DIR, "JASM")
@@ -515,12 +520,18 @@ def save_mod_ini_keybinds(mod_dir, new_keybinds):
         return False
 
 def get_avatar_base64(icon_name):
-    for ext in [".png", ".webp"]:
-        raw_name = icon_name.split('.')[0] + ext
-        icon_path = os.path.join(CHAR_IMG_DIR, raw_name)
-        if os.path.exists(icon_path):
+    candidates = [
+        os.path.join(AVATARS_DIR, icon_name),
+        os.path.join(AVATARS_DIR, icon_name.split('.')[0] + ".png"),
+        os.path.join(AVATARS_DIR, icon_name.split('.')[0] + ".webp"),
+        os.path.join(AVATARS_DIR, icon_name.split('.')[0] + ".jpg"),
+        os.path.join(CHAR_IMG_DIR, icon_name.split('.')[0] + ".png"),
+        os.path.join(CHAR_IMG_DIR, icon_name.split('.')[0] + ".webp"),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
             try:
-                with open(icon_path, "rb") as f:
+                with open(p, "rb") as f:
                     return f"data:image/png;base64,{base64.b64encode(f.read()).decode('utf-8')}"
             except:
                 pass
