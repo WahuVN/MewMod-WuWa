@@ -576,12 +576,22 @@ class MewModAPI:
 
     def get_characters(self):
         chars = []
+        total_all_mods = 0
+        if os.path.exists(WWMI_CHAR_PATH):
+            for c_f in os.listdir(WWMI_CHAR_PATH):
+                full_c = os.path.join(WWMI_CHAR_PATH, c_f)
+                if os.path.isdir(full_c):
+                    total_all_mods += len([x for x in os.listdir(full_c) if os.path.isdir(os.path.join(full_c, x))])
+
         for c in CHARACTER_LIST:
             count = 0
             if c["folder"]:
                 cf = os.path.join(WWMI_CHAR_PATH, c["folder"])
                 if os.path.exists(cf):
                     count = len([x for x in os.listdir(cf) if os.path.isdir(os.path.join(cf, x))])
+            else:
+                count = total_all_mods
+
             avatar = get_avatar_base64(c["icon"])
             chars.append({
                 "name": c["name"],
@@ -954,12 +964,15 @@ class MewModAPI:
                         mod_date = time.strftime('%m/%d/%Y', time.localtime(os.path.getmtime(full_m)))
                         
                         items.append({
+                            "name": clean_n,
+                            "clean_name": clean_n,
                             "char_folder": c_f,
                             "folder_name": m_f,
-                            "clean_name": clean_n,
                             "full_path": full_m,
+                            "is_enabled": not is_disabled,
                             "is_disabled": is_disabled,
                             "cover": cover_b64,
+                            "cover_base64": cover_b64,
                             "author": author,
                             "date": mod_date,
                             "note": note
@@ -987,10 +1000,13 @@ class MewModAPI:
         is_disabled = os.path.basename(full_path).startswith("DISABLED_")
         
         return {
-            "full_path": full_path,
+            "name": clean_n,
             "clean_name": clean_n,
+            "full_path": full_path,
+            "is_enabled": not is_disabled,
             "is_disabled": is_disabled,
             "cover": cover_b64,
+            "cover_base64": cover_b64,
             "author": author,
             "description": desc,
             "note": note,
@@ -2275,7 +2291,7 @@ HTML_TEMPLATE = """
 
     filteredChars.forEach(c => {
       const item = document.createElement('div');
-      const isAct = currentSelectedItem ? currentSelectedItem.name === c.name : (c.name === 'Tất Cả Nhân Vật');
+      const isAct = currentSelectedItem ? currentSelectedItem.name === c.name : (c.name === 'All Characters' || c.name === 'Tất Cả Nhân Vật');
       item.className = `char-item ${isAct ? 'active' : ''}`;
       item.onclick = () => selectItem(c);
       item.innerHTML = `
@@ -2304,7 +2320,7 @@ HTML_TEMPLATE = """
           <span style="font-size: 16px; width: 26px; text-align: center;">${sc.icon}</span>
           <span class="char-name">${sc.name}</span>
         </div>
-        ${c.count > 0 ? `<span class="char-badge">${c.count}</span>` : ''}
+        ${sc.count > 0 ? `<span class="char-badge">${sc.count}</span>` : ''}
       `;
       list.appendChild(item);
     });
@@ -2312,10 +2328,11 @@ HTML_TEMPLATE = """
 
   function selectItem(item) {
     currentSelectedItem = item;
-    if (item.name === 'Tất Cả Nhân Vật') {
+    const isAll = !item || item.name === 'All Characters' || item.name === 'Tất Cả Nhân Vật' || !item.folder;
+    if (isAll) {
       currentChar = '';
       currentCharFolder = '';
-      document.getElementById('context-char-name').innerText = 'Tất Cả Nhân Vật';
+      document.getElementById('context-char-name').innerText = 'All Characters';
     } else {
       currentChar = item.name;
       currentCharFolder = item.folder || '';
@@ -2331,16 +2348,16 @@ HTML_TEMPLATE = """
   }
 
   function getActiveQuery() {
-    if (!currentSelectedItem || currentSelectedItem.name === 'Tất Cả Nhân Vật') return '';
+    if (!currentSelectedItem || currentSelectedItem.name === 'All Characters' || currentSelectedItem.name === 'Tất Cả Nhân Vật') return '';
     if (currentSelectedItem.type === 'category') {
-      if (currentSource === 'huihui168') return currentSelectedItem.huihui_kw;
-      if (currentSource === 'gamebanana') return currentSelectedItem.gb_kw;
-      return currentSelectedItem.folder;
+      if (currentSource === 'huihui168') return currentSelectedItem.huihui_kw || '';
+      if (currentSource === 'gamebanana') return currentSelectedItem.gb_kw || '';
+      return currentSelectedItem.folder || '';
     }
     if (currentSource === 'huihui168' && currentSelectedItem.query_cn) {
       return currentSelectedItem.query_cn;
     }
-    return currentSelectedItem.query || currentSelectedItem.name;
+    return currentSelectedItem.query || currentSelectedItem.name || '';
   }
 
   function switchStore(src) {
@@ -2776,8 +2793,10 @@ HTML_TEMPLATE = """
     setTimeout(() => {
       document.getElementById('dl-modal').className = 'modal-overlay';
       switchView('installed');
+      currentCharFolder = '';
       loadCharacters();
-    }, 1200);
+      loadInstalled('');
+    }, 1000);
   }
 
   function finishDownloadError(err) {
