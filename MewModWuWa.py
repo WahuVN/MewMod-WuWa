@@ -1111,8 +1111,12 @@ class MewModAPI:
 
     def delete_mod(self, full_path):
         try:
-            shutil.rmtree(full_path, ignore_errors=True)
-            self.log(f"🗑️ Đã xóa Mod: {os.path.basename(full_path)}")
+            if os.path.exists(full_path):
+                if os.path.isdir(full_path):
+                    shutil.rmtree(full_path, ignore_errors=True)
+                else:
+                    os.remove(full_path)
+            self.log(f"🗑️ Đã xóa vĩnh viễn Mod: {os.path.basename(full_path)}")
             return {"success": True}
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -2098,7 +2102,7 @@ HTML_TEMPLATE = """
                 <th>TÊN BẢN MOD</th>
                 <th style="width: 140px;">TÁC GIẢ</th>
                 <th style="width: 130px;">TRẠNG THÁI</th>
-                <th style="width: 90px; text-align: right;">THAO TÁC</th>
+                <th style="width: 140px; text-align: right;">THAO TÁC</th>
               </tr>
             </thead>
             <tbody id="installed-tbody">
@@ -2144,6 +2148,7 @@ HTML_TEMPLATE = """
           <div style="display: flex; gap: 8px; margin-top: auto; padding-top: 10px;">
             <button class="btn btn-primary" style="flex: 1;" onclick="saveSelectedModConfig()">💾 Lưu Cấu Hình</button>
             <button class="btn btn-accent" onclick="openFixerModal(selectedModDetail ? selectedModDetail.full_path : null)">🔧 Sửa Lỗi</button>
+            <button class="btn btn-danger" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);" onclick="deleteCurrentInspectedMod()" title="Xóa vĩnh viễn bản mod này">🗑️ Xóa</button>
           </div>
         </div>
       </div>
@@ -2621,9 +2626,12 @@ HTML_TEMPLATE = """
             ${isEn ? '● Đang Hoạt Động' : '○ Đã Tắt'}
           </span>
         </td>
-        <td style="text-align: right;">
-          <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="inspectMod('${m.full_path.replace(/\\\\/g, '\\\\\\\\')}', ${idx})">
-            Chi Tiết
+        <td style="text-align: right; white-space: nowrap;">
+          <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; margin-right: 4px;" onclick="inspectMod('${m.full_path.replace(/\\\\/g, '\\\\\\\\')}', ${idx})" title="Xem chi tiết & phím tắt">
+            👁️ Xem
+          </button>
+          <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);" onclick="confirmDeleteMod('${m.full_path.replace(/\\\\/g, '\\\\\\\\')}', '${m.name.replace(/'/g, "\\'")}')" title="Xóa vĩnh viễn bản mod này">
+            🗑️ Xóa
           </button>
         </td>
       `;
@@ -2728,6 +2736,27 @@ HTML_TEMPLATE = """
     document.getElementById('insp-cover-img').style.display = 'none';
     document.getElementById('insp-no-cover').style.display = 'block';
     document.getElementById('insp-keybinds').innerHTML = '';
+  }
+
+  async function confirmDeleteMod(fullPath, modName) {
+    if (!confirm(`Bạn có chắc chắn muốn XÓA VĨNH VIỄN bản mod:\n"${modName}"\nkhỏi game không?\n\n(Thao tác này sẽ xóa thư mục mod và không thể khôi phục!)`)) {
+      return;
+    }
+    const res = await pywebview.api.delete_mod(fullPath);
+    if (res && res.success) {
+      await loadCharacters();
+      loadInstalled(currentCharFolder);
+    } else {
+      alert('Lỗi xóa bản mod: ' + (res.error || 'Không xác định'));
+    }
+  }
+
+  function deleteCurrentInspectedMod() {
+    if (!selectedModDetail || !selectedModDetail.full_path) {
+      alert('Vui lòng chọn một bản mod để xóa.');
+      return;
+    }
+    confirmDeleteMod(selectedModDetail.full_path, selectedModDetail.name || 'Bản mod này');
   }
 
   /* MOD FIXER MODAL */
