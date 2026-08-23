@@ -408,7 +408,7 @@ def extract_archive(archive_path, extract_dir, password="huihui"):
         print("7z Error:", e)
     return False
 
-def optimize_mod_structure(extracted_root, base_mod_name, fallback_folder=""):
+def optimize_mod_structure(extracted_root, base_mod_name, fallback_folder="", online_cover_url="", author="Modder", desc=""):
     ini_dirs = []
     for root, dirs, files in os.walk(extracted_root):
         for f in files:
@@ -454,25 +454,32 @@ def optimize_mod_structure(extracted_root, base_mod_name, fallback_folder=""):
                     pass
                     
     cover_path = os.path.join(final_mod_dir, ".JASM_Cover.jpg")
-    if not os.path.exists(cover_path) and preview_images:
-        try:
-            shutil.copy2(preview_images[0], cover_path)
-        except:
-            pass
+    if not os.path.exists(cover_path):
+        if preview_images:
+            try:
+                shutil.copy2(preview_images[0], cover_path)
+            except:
+                pass
+        elif online_cover_url and online_cover_url.startswith("http"):
+            try:
+                req = urllib.request.Request(online_cover_url, headers=HEADERS)
+                with urllib.request.urlopen(req, context=SSL_CTX, timeout=10) as r, open(cover_path, "wb") as f_out:
+                    f_out.write(r.read())
+            except:
+                pass
 
     config_path = os.path.join(final_mod_dir, ".JASM_ModConfig.json")
-    if not os.path.exists(config_path):
-        config_data = {
-            "ModName": clean_name,
-            "Author": "Modder",
-            "Version": "1.0",
-            "Description": "Tối ưu bởi MewMod WuWa",
-            "Note": "",
-            "ToggleOptions": []
-        }
-        with open(config_path, "w", encoding="utf-8") as f:
-            json.dump(config_data, f, ensure_ascii=False, indent=2)
-            
+    config_data = {
+        "ModName": clean_name,
+        "Author": author if author else "Modder",
+        "Version": "1.0",
+        "Description": desc if desc else "Tối ưu bởi MewMod WuWa",
+        "Note": "",
+        "ToggleOptions": []
+    }
+    with open(config_path, "w", encoding="utf-8") as f:
+        json.dump(config_data, f, ensure_ascii=False, indent=2)
+        
     return char_folder_name, clean_name, final_mod_dir
 
 def parse_mod_ini_keybinds(mod_dir):
@@ -576,8 +583,10 @@ def get_avatar_base64(icon_name):
 def get_image_base64_from_path(img_path):
     if os.path.exists(img_path):
         try:
+            ext = os.path.splitext(img_path)[1].lower().replace('.', '')
+            mime = 'jpeg' if ext in ['jpg', 'jpeg'] else ('png' if ext == 'png' else 'webp')
             with open(img_path, "rb") as f:
-                return f"data:image/jpeg;base64,{base64.b64encode(f.read()).decode('utf-8')}"
+                return f"data:image/{mime};base64,{base64.b64encode(f.read()).decode('utf-8')}"
         except:
             pass
     return ""
@@ -843,11 +852,13 @@ class MewModAPI:
         title = mod.get("title")
         link = mod.get("link")
         context_folder = mod.get("context_folder", "")
+        img_url = mod.get("img_url", "")
+        author = mod.get("author", "Modder")
         
-        threading.Thread(target=self._download_worker, args=(source, mod_id, title, link, context_folder), daemon=True).start()
+        threading.Thread(target=self._download_worker, args=(source, mod_id, title, link, context_folder, img_url, author), daemon=True).start()
         return {"started": True}
 
-    def _download_worker(self, source, mod_id, title, link, context_folder=""):
+    def _download_worker(self, source, mod_id, title, link, context_folder="", img_url="", author="Modder"):
         self.log(f"🚀 Bắt đầu tự động tải 1-Click: {title}...")
         self._window.evaluate_js("window.showDownloadModal();")
         
@@ -869,6 +880,14 @@ class MewModAPI:
                 fname = f_obj.get("_sFile", f"GB_Mod_{mod_id}.zip")
                 fsize = f_obj.get("_nFilesize", 0)
                 
+                # Check for high-res preview image in GameBanana profile
+                preview_media = data.get("_aPreviewMedia", {}).get("_aImages", [])
+                if preview_media and not img_url:
+                    base_u = preview_media[0].get("_sBaseUrl", "")
+                    file_u = preview_media[0].get("_sFile", "")
+                    if base_u and file_u:
+                        img_url = f"{base_u}/{file_u}"
+                
                 temp_file = os.path.join(os.environ.get("TEMP", ""), fname)
                 dl_req = urllib.request.Request(dl_url, headers=HEADERS)
                 with urllib.request.urlopen(dl_req, context=SSL_CTX, timeout=120) as r, open(temp_file, "wb") as out_f:
@@ -889,7 +908,7 @@ class MewModAPI:
                 if os.path.exists(temp_ext):
                     shutil.rmtree(temp_ext, ignore_errors=True)
                 extract_archive(temp_file, temp_ext, password="")
-                char_f, clean_n, final_d = optimize_mod_structure(temp_ext, fname, context_folder)
+                char_f, clean_n, final_d = optimize_mod_structure(temp_ext, fname, context_folder, online_cover_url=img_url, author=author, desc=title)
                 shutil.rmtree(temp_ext, ignore_errors=True)
                 try:
                     os.remove(temp_file)
@@ -945,7 +964,7 @@ class MewModAPI:
                 if os.path.exists(temp_ext):
                     shutil.rmtree(temp_ext, ignore_errors=True)
                 extract_archive(temp_file, temp_ext, password="huihui")
-                char_f, clean_n, final_d = optimize_mod_structure(temp_ext, filename, context_folder)
+                char_f, clean_n, final_d = optimize_mod_structure(temp_ext, filename, context_folder, online_cover_url=img_url, author=author, desc=title)
                 shutil.rmtree(temp_ext, ignore_errors=True)
                 try:
                     os.remove(temp_file)
@@ -1019,6 +1038,9 @@ class MewModAPI:
         return items
 
     def get_mod_detail(self, full_path):
+        if not os.path.exists(full_path):
+            return None
+
         keybinds = parse_mod_ini_keybinds(full_path)
         config_path = os.path.join(full_path, ".JASM_ModConfig.json")
         author = "Modder"
@@ -1033,23 +1055,64 @@ class MewModAPI:
                     note = cfg.get("Note", "")
             except:
                 pass
+
+        # Scan all images inside mod directory
+        all_imgs = []
         cover_path = os.path.join(full_path, ".JASM_Cover.jpg")
-        cover_b64 = get_image_base64_from_path(cover_path)
+        if os.path.exists(cover_path):
+            all_imgs.append({"path": cover_path, "name": "Ảnh Bìa Chính", "base64": get_image_base64_from_path(cover_path)})
+
+        for root, dirs, files in os.walk(full_path):
+            for f in files:
+                p = os.path.join(root, f)
+                ext = os.path.splitext(f)[1].lower()
+                if ext in ['.jpg', '.jpeg', '.png', '.webp'] and f.lower() != ".jasm_cover.jpg":
+                    b64 = get_image_base64_from_path(p)
+                    if b64:
+                        all_imgs.append({"path": p, "name": f, "base64": b64})
+
+        if not os.path.exists(cover_path) and all_imgs:
+            try:
+                shutil.copy2(all_imgs[0]["path"], cover_path)
+            except:
+                pass
+            cover_b64 = all_imgs[0]["base64"]
+        else:
+            cover_b64 = get_image_base64_from_path(cover_path)
+
         clean_n = os.path.basename(full_path).replace("DISABLED_", "")
         is_disabled = os.path.basename(full_path).startswith("DISABLED_")
-        
+        parent_folder = os.path.basename(os.path.dirname(full_path))
+
+        total_bytes = 0
+        file_count = 0
+        for root, dirs, files in os.walk(full_path):
+            for f in files:
+                file_count += 1
+                try:
+                    total_bytes += os.path.getsize(os.path.join(root, f))
+                except:
+                    pass
+        size_mb = round(total_bytes / (1024 * 1024), 2)
+        mod_date = time.strftime('%d/%m/%Y', time.localtime(os.path.getmtime(full_path)))
+
         return {
             "name": clean_n,
             "clean_name": clean_n,
+            "char_folder": parent_folder.upper(),
             "full_path": full_path,
             "is_enabled": not is_disabled,
             "is_disabled": is_disabled,
             "cover": cover_b64,
             "cover_base64": cover_b64,
+            "images": all_imgs,
             "author": author,
             "description": desc,
             "note": note,
-            "keybinds": keybinds
+            "keybinds": keybinds,
+            "size_mb": f"{size_mb} MB",
+            "file_count": file_count,
+            "mod_date": mod_date
         }
 
     def save_mod_detail(self, mod_json):
@@ -1890,7 +1953,7 @@ HTML_TEMPLATE = """
   }
   .cover-box {
     width: 100%;
-    height: 180px;
+    height: 190px;
     background: #08090f;
     border-radius: var(--radius-md);
     overflow: hidden;
@@ -1899,8 +1962,73 @@ HTML_TEMPLATE = """
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
   }
-  .cover-img { width: 100%; height: 100%; object-fit: cover; }
+  .cover-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.25s ease; }
+  .cover-box:hover .cover-img { transform: scale(1.03); }
+  .cover-zoom-hint {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(10, 12, 18, 0.85);
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+    pointer-events: none;
+    border: 1px solid var(--border-medium);
+    box-shadow: var(--shadow-sm);
+  }
+  .gallery-strip {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 2px 0 6px;
+  }
+  .gallery-thumb {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-xs);
+    object-fit: cover;
+    border: 2px solid var(--border-subtle);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: var(--transition);
+  }
+  .gallery-thumb:hover, .gallery-thumb.active {
+    border-color: var(--accent);
+    transform: scale(1.06);
+    box-shadow: 0 0 8px rgba(0, 210, 255, 0.4);
+  }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .meta-pill {
+    background: var(--bg-canvas);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .meta-lbl {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+  }
+  .meta-val {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
   .form-group {
     display: flex;
@@ -2118,9 +2246,37 @@ HTML_TEMPLATE = """
             <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="openSelectedModFolder()">📂 Mở Folder</button>
           </div>
 
-          <div class="cover-box">
+          <!-- HERO PREVIEW COVER -->
+          <div class="cover-box" id="insp-cover-box" onclick="openInspectorFullPreview()" title="Bấm để xem ảnh phóng to toàn màn hình">
             <img src="" id="insp-cover-img" class="cover-img" style="display: none;">
-            <div id="insp-no-cover" style="color: var(--text-muted); font-size: 11px;">Chưa có ảnh bìa</div>
+            <div id="insp-no-cover" style="color: var(--text-muted); font-size: 11px;">Chưa có ảnh bìa (.JASM_Cover.jpg)</div>
+            <div class="cover-zoom-hint" id="insp-zoom-hint" style="display: none;">🔍 Phóng To Ảnh</div>
+          </div>
+
+          <!-- SCREENSHOTS GALLERY STRIP -->
+          <div id="insp-gallery-wrap" style="display: none;">
+            <div class="form-label" style="margin-bottom: 4px; font-size: 10px;">📸 Album Ảnh Mod (<span id="insp-img-count">0</span> ảnh):</div>
+            <div class="gallery-strip" id="insp-gallery-strip"></div>
+          </div>
+
+          <!-- METADATA BADGES -->
+          <div class="meta-grid" id="insp-meta-grid">
+            <div class="meta-pill">
+              <span class="meta-lbl">👤 NHÂN VẬT</span>
+              <span class="meta-val" id="insp-meta-char">-</span>
+            </div>
+            <div class="meta-pill">
+              <span class="meta-lbl">💾 DUNG LƯỢNG</span>
+              <span class="meta-val" id="insp-meta-size">-</span>
+            </div>
+            <div class="meta-pill">
+              <span class="meta-lbl">📅 NGÀY CÀI</span>
+              <span class="meta-val" id="insp-meta-date">-</span>
+            </div>
+            <div class="meta-pill">
+              <span class="meta-lbl">⚡ TRẠNG THÁI</span>
+              <span class="meta-val" id="insp-meta-status">-</span>
+            </div>
           </div>
 
           <div class="form-group">
@@ -2658,6 +2814,9 @@ HTML_TEMPLATE = """
     loadInstalled(currentCharFolder);
   }
 
+  let activeInspectedImages = [];
+  let currentInspectedImgIdx = 0;
+
   async function inspectMod(fullPath, rowIdx = -1) {
     if (rowIdx >= 0) {
       document.querySelectorAll('#installed-tbody tr').forEach(r => r.className = '');
@@ -2672,18 +2831,98 @@ HTML_TEMPLATE = """
     document.getElementById('insp-author').value = selectedModDetail.author || '';
     document.getElementById('insp-note').value = selectedModDetail.note || '';
 
+    // Metadata Badges
+    document.getElementById('insp-meta-char').innerText = selectedModDetail.char_folder || 'OTHERS';
+    document.getElementById('insp-meta-size').innerText = selectedModDetail.size_mb || '-';
+    document.getElementById('insp-meta-date').innerText = selectedModDetail.mod_date || '-';
+    const statusEl = document.getElementById('insp-meta-status');
+    if (selectedModDetail.is_enabled) {
+      statusEl.innerText = '🟢 Đang Bật';
+      statusEl.style.color = '#10b981';
+    } else {
+      statusEl.innerText = '⚪ Đã Tắt';
+      statusEl.style.color = 'var(--text-muted)';
+    }
+
+    // Images & Gallery
+    activeInspectedImages = selectedModDetail.images || [];
+    currentInspectedImgIdx = 0;
+
     const imgEl = document.getElementById('insp-cover-img');
     const noImgEl = document.getElementById('insp-no-cover');
-    if (selectedModDetail.cover_base64) {
+    const zoomHint = document.getElementById('insp-zoom-hint');
+    const galWrap = document.getElementById('insp-gallery-wrap');
+    const galStrip = document.getElementById('insp-gallery-strip');
+
+    if (activeInspectedImages.length > 0) {
+      imgEl.src = activeInspectedImages[0].base64;
+      imgEl.style.display = 'block';
+      noImgEl.style.display = 'none';
+      if (zoomHint) zoomHint.style.display = 'block';
+    } else if (selectedModDetail.cover_base64) {
       imgEl.src = selectedModDetail.cover_base64;
       imgEl.style.display = 'block';
       noImgEl.style.display = 'none';
+      if (zoomHint) zoomHint.style.display = 'block';
     } else {
       imgEl.style.display = 'none';
       noImgEl.style.display = 'block';
+      if (zoomHint) zoomHint.style.display = 'none';
+    }
+
+    if (activeInspectedImages.length > 1) {
+      galWrap.style.display = 'block';
+      document.getElementById('insp-img-count').innerText = activeInspectedImages.length;
+      galStrip.innerHTML = '';
+      activeInspectedImages.forEach((imgObj, i) => {
+        const thumb = document.createElement('img');
+        thumb.src = imgObj.base64;
+        thumb.className = `gallery-thumb ${i === 0 ? 'active' : ''}`;
+        thumb.title = imgObj.name;
+        thumb.onclick = (e) => {
+          e.stopPropagation();
+          currentInspectedImgIdx = i;
+          imgEl.src = imgObj.base64;
+          document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+          thumb.classList.add('active');
+        };
+        galStrip.appendChild(thumb);
+      });
+    } else {
+      galWrap.style.display = 'none';
     }
 
     renderKeybinds(selectedModDetail.keybinds || []);
+  }
+
+  function openInspectorFullPreview() {
+    if (!activeInspectedImages || activeInspectedImages.length === 0) {
+      if (selectedModDetail && selectedModDetail.cover_base64) {
+        galleryImages = [selectedModDetail.cover_base64];
+        galleryIndex = 0;
+        activeGalleryMod = {
+          title: selectedModDetail.name,
+          author: selectedModDetail.author,
+          source: 'local'
+        };
+        document.getElementById('gal-title').innerText = selectedModDetail.name;
+        document.getElementById('gal-author').innerText = `Tác giả: ${selectedModDetail.author} | Nhân vật: ${selectedModDetail.char_folder}`;
+        updateGalleryView();
+        document.getElementById('gallery-modal').className = 'modal-overlay active';
+      }
+      return;
+    }
+    galleryImages = activeInspectedImages.map(img => img.base64);
+    galleryIndex = currentInspectedImgIdx;
+    activeGalleryMod = {
+      title: selectedModDetail.name,
+      author: selectedModDetail.author,
+      source: 'local'
+    };
+    document.getElementById('gal-title').innerText = selectedModDetail.name;
+    document.getElementById('gal-author').innerText = `Tác giả: ${selectedModDetail.author} | Nhân vật: ${selectedModDetail.char_folder} (${activeInspectedImages.length} ảnh)`;
+    updateGalleryView();
+    document.getElementById('gallery-modal').className = 'modal-overlay active';
   }
 
   function renderKeybinds(kbs) {
@@ -2716,12 +2955,20 @@ HTML_TEMPLATE = """
       return { ...kb, key: val };
     });
 
-    const res = await pywebview.api.save_mod_detail(selectedModDetail.full_path, newName, newAuthor, newNote, newKbs);
+    const payload = JSON.stringify({
+      full_path: selectedModDetail.full_path,
+      name: newName,
+      author: newAuthor,
+      note: newNote,
+      keybinds: newKbs
+    });
+
+    const res = await pywebview.api.save_mod_detail(payload);
     if (res.success) {
-      alert('Đã lưu cấu hình mod.ini thành công!');
+      alert('Đã lưu cấu hình mod thành công!');
       loadInstalled(currentCharFolder);
     } else {
-      alert('Lỗi lưu cấu hình: ' + res.error);
+      alert('Lỗi lưu cấu hình: ' + (res.error || 'Không xác định'));
     }
   }
 
@@ -2735,6 +2982,14 @@ HTML_TEMPLATE = """
     document.getElementById('insp-note').value = '';
     document.getElementById('insp-cover-img').style.display = 'none';
     document.getElementById('insp-no-cover').style.display = 'block';
+    const zoomHint = document.getElementById('insp-zoom-hint');
+    if (zoomHint) zoomHint.style.display = 'none';
+    const galWrap = document.getElementById('insp-gallery-wrap');
+    if (galWrap) galWrap.style.display = 'none';
+    document.getElementById('insp-meta-char').innerText = '-';
+    document.getElementById('insp-meta-size').innerText = '-';
+    document.getElementById('insp-meta-date').innerText = '-';
+    document.getElementById('insp-meta-status').innerText = '-';
     document.getElementById('insp-keybinds').innerHTML = '';
   }
 
