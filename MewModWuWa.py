@@ -859,8 +859,8 @@ class MewModAPI:
         return {"started": True}
 
     def _download_worker(self, source, mod_id, title, link, context_folder="", img_url="", author="Modder"):
-        self.log(f"🚀 Bắt đầu tự động tải 1-Click: {title}...")
-        self._window.evaluate_js("window.showDownloadModal();")
+        self.log(f"[Tải Xuống] Bắt đầu tải bản mod: {title}...")
+        self._window.evaluate_js(f"window.showDownloadWidget('{title.replace(chr(39), '')}');")
         
         try:
             def _prog(pct, cur_mb, tot_mb, speed_mb):
@@ -874,7 +874,7 @@ class MewModAPI:
                     data = json.loads(resp.read().decode('utf-8'))
                 files = data.get("_aFiles", [])
                 if not files:
-                    raise Exception("Không tìm thấy file trên GameBanana!")
+                    raise Exception("Không tìm thấy tệp tải trên GameBanana.")
                 f_obj = files[0]
                 dl_url = f_obj.get("_sDownloadUrl")
                 fname = f_obj.get("_sFile", f"GB_Mod_{mod_id}.zip")
@@ -916,7 +916,7 @@ class MewModAPI:
                     pass
             elif source == "nexus":
                 webbrowser.open(link)
-                self.log(f"🌐 Đã mở liên kết NexusMods: {link}")
+                self.log(f"[NexusMods] Đã mở liên kết trình duyệt: {link}")
                 self._window.evaluate_js(f"window.finishDownloadSuccess('{title}', 'others');")
                 return
             else:
@@ -927,7 +927,7 @@ class MewModAPI:
                 if not share_match:
                     share_match = re.search(r'cloudreve%3A%2F%2F([a-zA-Z0-9_-]+)%40share', html)
                 if not share_match:
-                    raise Exception("Không tìm thấy link chia sẻ Cloudreve!")
+                    raise Exception("Không tìm thấy liên kết chia sẻ Cloudreve.")
                 share_key = share_match.group(1)
                 
                 list_url = f"https://cloudreve.huihui123.org/api/v4/file?uri={urllib.parse.quote(f'cloudreve://{share_key}@share/')}"
@@ -935,7 +935,7 @@ class MewModAPI:
                     list_data = json.loads(resp.read().decode('utf-8'))
                 files = list_data.get("data", {}).get("files", [])
                 if not files:
-                    raise Exception("Không tìm thấy file nào!")
+                    raise Exception("Không tìm thấy tệp mod nào trong liên kết.")
                 target_file = files[0]
                 filename = target_file["name"]
                 
@@ -971,24 +971,24 @@ class MewModAPI:
                 except:
                     pass
 
-            self.log(f"🎉 TỰ ĐỘNG NẠP THÀNH CÔNG: [{clean_n}] -> {char_f.upper()}!")
+            self.log(f"[Cài Đặt] Đã cài đặt thành công: [{clean_n}] -> Thư mục: {char_f.upper()}")
             self._window.evaluate_js(f"window.finishDownloadSuccess('{clean_n}', '{char_f}');")
         except Exception as e:
-            self.log(f"⚠️ Lỗi tải mod: {e}")
+            self.log(f"[Lỗi Tải Mod] {e}")
             self._window.evaluate_js(f"window.finishDownloadError('{str(e)}');")
 
     def import_from_direct_link(self, link_url):
-        self.log(f"📥 Đang phân tích liên kết: {link_url}...")
+        self.log(f"[Liên Kết] Đang phân tích liên kết: {link_url}...")
         if "cloudreve" in link_url or "huihui" in link_url:
             threading.Thread(target=self._download_worker, args=("huihui168", "", "Mod Liên Kết Trực Tiếp", link_url), daemon=True).start()
-            return {"success": True, "msg": "Đang bắt đầu nạp từ Cloudreve/Hui盘"}
+            return {"success": True, "msg": "Đang tiến hành tải từ Cloudreve/Hui盤"}
         elif "gamebanana.com/mods/" in link_url:
             m = re.search(r'mods/([0-9]+)', link_url)
             if m:
                 threading.Thread(target=self._download_worker, args=("gamebanana", m.group(1), f"GameBanana Mod {m.group(1)}", link_url), daemon=True).start()
-                return {"success": True, "msg": "Đang bắt đầu nạp từ GameBanana"}
+                return {"success": True, "msg": "Đang tiến hành tải từ GameBanana"}
         webbrowser.open(link_url)
-        return {"success": True, "msg": "Đã mở trình duyệt tải"}
+        return {"success": True, "msg": "Đã mở liên kết tải trên trình duyệt"}
 
     def get_installed_mods(self, filter_folder=""):
         items = []
@@ -2137,6 +2137,92 @@ HTML_TEMPLATE = """
     overflow: hidden;
   }
 
+  /* NON-BLOCKING FLOATING CORNER DOWNLOAD WIDGET */
+  .corner-dl-widget {
+    position: fixed;
+    top: 68px;
+    right: 20px;
+    width: 360px;
+    background: #0f121d;
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75), 0 0 20px rgba(0, 210, 255, 0.15);
+    padding: 14px 16px;
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    animation: slideInDown 0.25s ease-out forwards;
+  }
+  .corner-dl-widget.active { display: flex; }
+  .corner-dl-widget.success {
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75), 0 0 20px rgba(16, 185, 129, 0.25);
+  }
+  .corner-dl-widget.error {
+    border-color: rgba(244, 63, 94, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75), 0 0 20px rgba(244, 63, 94, 0.25);
+  }
+  .corner-dl-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .corner-dl-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+  }
+  .corner-dl-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(0, 210, 255, 0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .corner-dl-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .corner-dl-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: var(--radius-xs);
+    transition: var(--transition);
+  }
+  .corner-dl-close:hover { color: #fff; background: rgba(255,255,255,0.1); }
+  .corner-dl-subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .corner-dl-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+  @keyframes slideInDown {
+    from { opacity: 0; transform: translateY(-15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
   /* PROGRESS BAR */
   .progress-wrap { background: var(--bg-canvas); height: 8px; border-radius: var(--radius-full); overflow: hidden; margin: 16px 0 8px; }
   .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #00d2ff, #10b981); transition: width 0.15s; }
@@ -2170,9 +2256,9 @@ HTML_TEMPLATE = """
       <div class="brand-logo">🐾</div>
       <div class="brand-text">
         <div class="brand-title">
-          MEWMOD WUWA <span class="brand-badge">v4.0 Pro</span>
+          MEWMOD WUWA <span class="brand-badge">v4.0</span>
         </div>
-        <div class="brand-sub">Hệ Thống Quản Lý & Nạp Mod Độc Lập</div>
+        <div class="brand-sub">Trình Quản Lý & Cài Đặt Mod</div>
       </div>
     </div>
 
@@ -2182,15 +2268,15 @@ HTML_TEMPLATE = """
       <button class="nav-item" id="tab-hh" onclick="switchStore('huihui168')">🇨🇳 Huihui168</button>
       <button class="nav-item" id="tab-nx" onclick="switchStore('nexus')">🎮 NexusMods</button>
       <button class="nav-item" id="tab-inst" onclick="switchView('installed')">📁 Mods Đã Cài</button>
-      <button class="nav-item" id="tab-imp" onclick="switchView('direct_link')">⚡ Nạp Link</button>
+      <button class="nav-item" id="tab-imp" onclick="switchView('direct_link')">📥 Nhập Link</button>
     </div>
 
     <!-- ACTIONS -->
     <div class="header-actions">
       <button class="btn btn-secondary" onclick="openFixerModal()">🔧 Sửa Lỗi Mod</button>
       <button class="btn btn-secondary" onclick="pywebview.api.reload_wwmi_mods()">🔄 Nạp Lại (F10)</button>
-      <button class="btn btn-secondary" onclick="pywebview.api.open_folder('')">📂 Thư Mục</button>
-      <button class="btn btn-primary" onclick="pywebview.api.launch_game()">▶ Chạy Game (WWMI)</button>
+      <button class="btn btn-secondary" onclick="pywebview.api.open_folder('')">📂 Thư Mục Mod</button>
+      <button class="btn btn-primary" onclick="pywebview.api.launch_game()">▶ Khởi Động Game (WWMI)</button>
     </div>
   </header>
 
@@ -2198,12 +2284,12 @@ HTML_TEMPLATE = """
   <div class="workspace">
     <!-- LEFT SIDEBAR -->
     <aside>
-      <div class="sidebar-filter-wrap" style="position: relative;">
+      <div class="sidebar-filter-wrap">
         <span class="sidebar-search-icon">🔍</span>
-        <input type="text" class="sidebar-search" id="sidebar-filter-input" placeholder="Lọc nhân vật..." oninput="filterSidebarList(this.value)">
+        <input type="text" class="sidebar-search" id="char-search" placeholder="Tìm nhân vật..." oninput="filterCharacters(this.value)">
       </div>
-      <div class="sidebar-scroll" id="char-list">
-        <!-- Rendered via JS -->
+      <div class="sidebar-scroll" id="sidebar-char-list">
+        <!-- Characters Rendered via JS -->
       </div>
     </aside>
 
@@ -2222,10 +2308,10 @@ HTML_TEMPLATE = """
           <input type="text" class="toolbar-search" id="search-input" placeholder="Tìm kiếm bản Mod..." onkeypress="handleSearchKey(event)">
         </div>
 
-        <!-- JASM BULK ACTIONS -->
+        <!-- BULK ACTIONS -->
         <div id="installed-bulk-actions" style="display: none; gap: 8px;">
-          <button class="btn btn-danger" style="padding: 5px 10px; font-size: 11px;" onclick="toggleAllModsForCurrentChar(false)">🚫 Tắt Hết</button>
-          <button class="btn btn-accent" style="padding: 5px 10px; font-size: 11px;" onclick="toggleAllModsForCurrentChar(true)">✅ Bật Hết</button>
+          <button class="btn btn-danger" style="padding: 5px 10px; font-size: 11px;" onclick="toggleAllModsForCurrentChar(false)">🚫 Tắt Toàn Bộ</button>
+          <button class="btn btn-accent" style="padding: 5px 10px; font-size: 11px;" onclick="toggleAllModsForCurrentChar(true)">✅ Bật Toàn Bộ</button>
           <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="loadInstalled(currentCharFolder)">🔄 Làm Mới</button>
         </div>
       </div>
@@ -2258,7 +2344,7 @@ HTML_TEMPLATE = """
         <div class="inspector" id="inspector-panel">
           <div class="inspector-header">
             <div class="inspector-title">⚙️ THÔNG TIN MOD</div>
-            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="openSelectedModFolder()">📂 Mở Folder</button>
+            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="openSelectedModFolder()">📂 Mở Thư Mục</button>
           </div>
 
           <!-- HERO PREVIEW COVER -->
@@ -2327,11 +2413,11 @@ HTML_TEMPLATE = """
       <!-- DIRECT LINK VIEW -->
       <div id="direct-link-view" style="display: none; padding: 24px; max-width: 680px; margin: 0 auto; width: 100%;">
         <div style="background: var(--bg-surface); border: 1px solid var(--border-medium); border-radius: var(--radius-lg); padding: 24px;">
-          <div style="font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 8px;">⚡ Nạp Mod Bằng Đường Dẫn Trực Tiếp</div>
-          <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Hỗ trợ link Cloudreve, Hui盘, GameBanana, Google Drive, Baidu, Quark. Tự động giải nén và nạp vào game!</div>
+          <div style="font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 8px;">Nhập Mod Từ Liên Kết Trực Tiếp</div>
+          <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Hỗ trợ liên kết Cloudreve, GameBanana, Google Drive... Tự động giải nén và cài đặt vào thư mục game.</div>
           <div style="display: flex; gap: 8px;">
-            <input type="text" id="direct-link-input" class="form-input" style="flex: 1; padding: 10px 14px;" placeholder="Dán link tải vào đây...">
-            <button class="btn btn-primary" onclick="submitDirectLink()">⚡ Nạp Ngay</button>
+            <input type="text" id="direct-link-input" class="form-input" style="flex: 1; padding: 10px 14px;" placeholder="Dán liên kết tải vào đây...">
+            <button class="btn btn-primary" onclick="submitDirectLink()">Cài Đặt Ngay</button>
           </div>
         </div>
       </div>
@@ -2342,9 +2428,9 @@ HTML_TEMPLATE = """
   <div class="status-bar">
     <div class="status-left">
       <div class="status-dot"></div>
-      <div class="status-text" id="status-log-text">MewMod WuWa v4.0 Ultimate đã sẵn sàng.</div>
+      <div class="status-text" id="status-log-text">MewMod WuWa đã sẵn sàng.</div>
     </div>
-    <div>WWMI Engine: <span style="color: var(--accent); font-weight: 700;">Active</span></div>
+    <div>WWMI Engine: <span style="color: var(--accent); font-weight: 700;">Hoạt Động</span></div>
   </div>
 
   <!-- MOD FIXER MODAL -->
@@ -2354,12 +2440,12 @@ HTML_TEMPLATE = """
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-size: 20px;">🔧</span>
           <div>
-            <div style="font-size: 15px; font-weight: 800; color: var(--accent);">BỘ CÔNG CỤ SỬA LỖI MOD WUWA v3.6.0 (VIỆT HÓA)</div>
+            <div style="font-size: 15px; font-weight: 800; color: var(--accent);">BỘ CÔNG CỤ SỬA LỖI MOD WUWA (CFG 3.6.0)</div>
             <div style="font-size: 11px; color: var(--text-muted);">Áp dụng quy tắc Vertex / Shader mới nhất từ Moonholder & MODORA</div>
           </div>
         </div>
         <div style="display: flex; gap: 8px;">
-          <button class="btn btn-secondary" onclick="pywebview.api.launch_mod_fixer()">🚀 Mở Tool Gốc</button>
+          <button class="btn btn-secondary" onclick="pywebview.api.launch_mod_fixer()">Mở Công Cụ Gốc</button>
           <button class="btn btn-secondary" style="color: var(--danger);" onclick="closeFixerModal()">✕ Đóng</button>
         </div>
       </div>
@@ -2441,18 +2527,22 @@ HTML_TEMPLATE = """
     </div>
   </div>
 
-  <!-- DOWNLOAD MODAL -->
-  <div class="modal-overlay" id="dl-modal">
-    <div class="modal-box" style="width: 460px; padding: 24px;">
-      <div style="font-size: 15px; font-weight: 800; color: var(--accent);" id="dl-title">⚡ Đang Tải & Cài Đặt Mod...</div>
-      <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;" id="dl-subtitle">Đang kết nối máy chủ tốc độ cao...</div>
-      <div class="progress-wrap">
-        <div class="progress-fill" id="dl-bar"></div>
+  <!-- FLOATING CORNER DOWNLOAD WIDGET (NON-BLOCKING) -->
+  <div class="corner-dl-widget" id="dl-widget">
+    <div class="corner-dl-header">
+      <div class="corner-dl-title-wrap">
+        <div class="corner-dl-spinner" id="dl-spinner"></div>
+        <div class="corner-dl-title" id="dl-title">Đang tải bản mod...</div>
       </div>
-      <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 6px;">
-        <span id="dl-pct">0%</span>
-        <span id="dl-speed">Đang tính...</span>
-      </div>
+      <button class="corner-dl-close" onclick="hideDownloadWidget()" title="Ẩn thông báo">✕</button>
+    </div>
+    <div class="corner-dl-subtitle" id="dl-subtitle">Đang kết nối máy chủ...</div>
+    <div class="progress-wrap" style="margin: 8px 0 6px; height: 6px;">
+      <div class="progress-fill" id="dl-bar"></div>
+    </div>
+    <div class="corner-dl-footer">
+      <span id="dl-pct">0%</span>
+      <span id="dl-speed">Đang chuẩn bị...</span>
     </div>
   </div>
 
@@ -2703,10 +2793,10 @@ HTML_TEMPLATE = """
           </div>
           <div class="card-actions">
             <button class="btn-card-dl" onclick='downloadMod(${JSON.stringify(m)})'>
-              ⚡ Tải 1-Click
+              Tải Xuống
             </button>
             <button class="btn-card-album" title="Xem toàn bộ ảnh xem trước" onclick='openGalleryModal(${JSON.stringify(m)})'>
-              🖼️ Ảnh
+              Xem Ảnh
             </button>
           </div>
         </div>
@@ -3147,54 +3237,73 @@ HTML_TEMPLATE = """
   });
 
 
+  let dlWidgetTimeout = null;
+
+  function hideDownloadWidget() {
+    const w = document.getElementById('dl-widget');
+    if (w) w.className = 'corner-dl-widget';
+  }
+
+  function showDownloadWidget(title = 'Đang tải bản mod...') {
+    if (dlWidgetTimeout) clearTimeout(dlWidgetTimeout);
+    const w = document.getElementById('dl-widget');
+    if (!w) return;
+    w.className = 'corner-dl-widget active';
+    document.getElementById('dl-title').innerText = title;
+    document.getElementById('dl-subtitle').innerText = 'Đang kết nối máy chủ...';
+    document.getElementById('dl-bar').style.width = '0%';
+    document.getElementById('dl-pct').innerText = '0%';
+    document.getElementById('dl-speed').innerText = 'Đang chuẩn bị...';
+  }
+
   function downloadMod(modObj) {
     const payload = Object.assign({}, modObj, {
       context_folder: currentCharFolder || '',
       context_name: currentChar || ''
     });
-    document.getElementById('dl-title').innerText = '📥 Đang Tải: ' + modObj.title;
-    document.getElementById('dl-subtitle').innerText = 'Đang kết nối máy chủ tốc độ cao...';
-    document.getElementById('dl-bar').style.width = '0%';
-    document.getElementById('dl-pct').innerText = '0%';
-    document.getElementById('dl-speed').innerText = 'Tốc độ: Đang tính toán...';
-    document.getElementById('dl-modal').className = 'modal-overlay active';
+    showDownloadWidget(modObj.title);
     pywebview.api.download_and_install(JSON.stringify(payload));
   }
 
-  function showDownloadModal() {
-    document.getElementById('dl-modal').className = 'modal-overlay active';
-  }
-
   function updateDownloadProgress(pct, cur, tot, speed) {
+    const w = document.getElementById('dl-widget');
+    if (w && !w.classList.contains('active')) w.className = 'corner-dl-widget active';
+    document.getElementById('dl-subtitle').innerText = 'Đang tải xuống dữ liệu...';
     document.getElementById('dl-bar').style.width = pct + '%';
     document.getElementById('dl-pct').innerText = pct + '% (' + cur + '/' + tot + ' MB)';
-    document.getElementById('dl-speed').innerText = '⚡ Tốc độ: ' + speed + ' MB/s';
+    document.getElementById('dl-speed').innerText = speed + ' MB/s';
   }
 
   function finishDownloadSuccess(name, char) {
+    const w = document.getElementById('dl-widget');
+    if (w) w.className = 'corner-dl-widget active success';
     document.getElementById('dl-bar').style.width = '100%';
-    document.getElementById('dl-subtitle').innerText = '🎉 ĐÃ NẠP THÀNH CÔNG VÀO GAME!';
-    setTimeout(async () => {
-      document.getElementById('dl-modal').className = 'modal-overlay';
-      await loadCharacters();
-      switchView('installed');
-      if (char) {
-        const found = allCharactersData.characters.find(c => c.folder && c.folder.toLowerCase() === char.toLowerCase()) ||
-                      allCharactersData.categories.find(sc => sc.folder && sc.folder.toLowerCase() === char.toLowerCase());
-        if (found) {
-          selectItem(found);
-          return;
-        }
-      }
-      selectAllCharacters();
-    }, 1000);
+    document.getElementById('dl-title').innerText = 'Đã cài đặt thành công';
+    document.getElementById('dl-subtitle').innerText = name || 'Hoàn tất giải nén và nạp vào game.';
+    document.getElementById('dl-speed').innerText = 'Hoàn tất 100%';
+    
+    // Auto update background lists without disrupting the user
+    loadCharacters();
+    if (currentView === 'installed') {
+      loadInstalled(currentCharFolder);
+    }
+    
+    if (dlWidgetTimeout) clearTimeout(dlWidgetTimeout);
+    dlWidgetTimeout = setTimeout(() => {
+      hideDownloadWidget();
+    }, 4500);
   }
 
   function finishDownloadError(err) {
-    document.getElementById('dl-subtitle').innerText = '⚠️ Lỗi: ' + err;
-    setTimeout(() => {
-      document.getElementById('dl-modal').className = 'modal-overlay';
-    }, 3000);
+    const w = document.getElementById('dl-widget');
+    if (w) w.className = 'corner-dl-widget active error';
+    document.getElementById('dl-title').innerText = 'Lỗi cài đặt mod';
+    document.getElementById('dl-subtitle').innerText = err || 'Không thể tải hoặc giải nén tệp mod.';
+    
+    if (dlWidgetTimeout) clearTimeout(dlWidgetTimeout);
+    dlWidgetTimeout = setTimeout(() => {
+      hideDownloadWidget();
+    }, 6000);
   }
 
   async function submitDirectLink() {
@@ -3215,7 +3324,7 @@ HTML_TEMPLATE = """
 def main():
     api = MewModAPI()
     window = webview.create_window(
-        title="🐾 MewMod WuWa v4.0 - Siêu Trung Tâm Mod Skin (Full JASM & MODORA)",
+        title="🐾 MewMod WuWa v4.0 - Trình Quản Lý & Cài Đặt Mod Skin",
         html=HTML_TEMPLATE,
         js_api=api,
         width=1320,
