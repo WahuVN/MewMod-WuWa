@@ -161,6 +161,42 @@ DICT_ACCESSORIES = {
     "weapon": "Vũ Khí (Weapon)"
 }
 
+HANVIET_MAP = {
+    '丝': 'Tất', '丰': 'Phong', '之': 'Của', '乳': 'Ngực', '亡': 'Vong', '人': 'Người',
+    '代': 'Đại', '修': 'Sửa', '停': 'Dừng', '元': 'Nguyên', '光': 'Sáng', '免': 'Miễn',
+    '公': 'Công', '内': 'Nội', '冰': 'Băng', '切': 'Cắt', '列': 'Liệt', '刘': 'Lưu',
+    '利': 'Lợi', '办': 'Biện', '千': 'Thiên', '华': 'Hoa', '博': 'Bác', '卡': 'Thẻ',
+    '去': 'Xóa', '友': 'Hữu', '发': 'Tóc', '合': 'Hợp', '后': 'Hậu', '含': 'Gồm',
+    '商': 'Thương', '喵': 'Mèo', '嘉': 'Gia', '器': 'Khí', '团': 'Đoàn', '图': 'Ảnh',
+    '垢': 'Bẩn', '堡': 'Bảo', '墨': 'Mực', '声': 'Thanh', '夏': 'Hạ', '多': 'Nhiều',
+    '大': 'Lớn', '头': 'Đầu', '契': 'Khế', '女': 'Nữ', '如': 'Như', '娘': 'Nương',
+    '娜': 'Na', '季': 'Mùa', '安': 'An', '官': 'Quan', '定': 'Định', '室': 'Phòng',
+    '寻': 'Tìm', '小': 'Nhỏ', '带': 'Dây', '年': 'Năm', '店': 'Tiệm', '归': 'Về',
+    '彩': 'Sắc', '影': 'Bóng', '彼': 'Bỉ', '德': 'Đức', '性': 'Tính', '情': 'Tình',
+    '愿': 'Nguyện', '成': 'Thành', '戮': 'Lục', '户': 'Hộ', '技': 'Kỹ', '持': 'Trì',
+    '换': 'Đổi', '支': 'Chi', '改': 'Sửa', '斯': 'Tư', '新': 'Mới', '方': 'Phương',
+    '旅': 'Lữ', '旗': 'Kỳ', '无': 'Không', '日': 'Ngày', '时': 'Thời', '明': 'Minh',
+    '星': 'Sao', '春': 'Xuân', '晨': 'Sáng', '暂': 'Tạm', '曲': 'Khúc', '最': 'Nhất',
+    '月': 'Trăng', '服': 'Đồ', '望': 'Vọng', '机': 'Cơ', '杀': 'Sát', '果': 'Nude',
+    '根': 'Căn', '格': 'Cách', '桃': 'Đào', '水': 'Nước', '永': 'Vĩnh', '洁': 'Khiết',
+    '流': 'Lưu', '浪': 'Sóng', '涂': 'Sơn', '淫': 'Gợi Cảm', '清': 'Thanh', '满': 'Mãn',
+    '潮': 'Triều', '火': 'Hỏa', '牛': 'Ngưu', '牵': 'Khiên', '狐': 'Hồ', '猫': 'Mèo',
+    '玉': 'Ngọc', '现': 'Hiện', '理': 'Lý', '瓷': 'Sứ', '用': 'Dùng', '白': 'Trắng',
+    '的': 'Của', '皇': 'Hoàng', '皮': 'Skin', '着': 'Mặc', '睡': 'Ngủ', '空': 'Không',
+    '站': 'Trạm', '管': 'Quản', '粉': 'Hồng', '糖': 'Đường', '系': 'Hệ', '紀': 'Kỷ',
+    '素': 'Tố', '紧': 'Chặt', '约': 'Ước', '纱': 'Voan', '编': 'Biên', '美': 'Mỹ',
+    '翠': 'Thúy', '翡': 'Phỉ', '者': 'Giả', '肚': 'Bụng', '肤': 'Da', '肩': 'Vai',
+    '胜': 'Thắng', '能': 'Năng', '膝': 'Gối', '舞': 'Vũ', '舰': 'Hạm', '良': 'Lương',
+    '色': 'Màu', '芙': 'Phù', '花': 'Hoa', '荡': 'Đãng', '荷': 'Hà', '莉': 'Lỵ',
+    '萌': 'Moe', '蓝': 'Lam', '蔚': 'Úy', '蕾': 'Nụ', '薄': 'Mỏng', '虔': 'Kiền',
+    '蜜': 'Mật', '蝶': 'Bướm', '衣': 'Áo', '补': 'Bù', '袜': 'Tất', '装': 'Trang Phục',
+    '裤': 'Quần', '语': 'Ngữ', '调': 'Điệu', '贝': 'Bối', '赛': 'Tái', '赦': 'Xá',
+    '身': 'Thân', '轨': 'Quỹ', '过': 'Qua', '迹': 'Tích', '透': 'Lộ', '速': 'Tốc',
+    '道': 'Đạo', '重': 'Trọng', '间': 'Gian', '队': 'Đội', '阴': 'Âm', '随': 'Tùy',
+    '集': 'Tập', '雪': 'Tuyết', '雷': 'Lôi', '雾': 'Sương', '露': 'Lộ', '青': 'Thanh',
+    '面': 'Mặt', '音': 'Âm', '風': 'Phong', '骸': 'Hài', '鸣': 'Minh', '鸦': 'Nha', '黑': 'Đen'
+}
+
 def translate_mod_title(zh_title):
     res = zh_title.strip()
     char_prefix = ""
@@ -171,8 +207,18 @@ def translate_mod_title(zh_title):
             break
     for zh, vi in DICT_PHRASES:
         res = res.replace(zh, f" {vi} ")
+        
+    for ch in re.findall(r'[\u4e00-\u9fff]', res):
+        vi_word = HANVIET_MAP.get(ch, '')
+        if vi_word:
+            res = res.replace(ch, f" {vi_word} ")
+        else:
+            res = res.replace(ch, " ")
+            
     res = char_prefix + " ".join(res.split())
-    return res.strip()
+    res = re.sub(r'\s+', ' ', res).strip()
+    return res
+
 
 CHARACTER_LIST = [
     {"name": "Tất Cả Nhân Vật", "query": "", "query_cn": "", "folder": "", "icon": "All.png"},
