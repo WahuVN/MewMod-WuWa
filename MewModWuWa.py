@@ -230,23 +230,25 @@ CHARACTER_LIST = [
     {"name": "Lucy", "query": "Lucy", "query_cn": "Lucy", "folder": "lucy", "icon": "Lucy.png"},
     {"name": "Rebecca (丽贝卡)", "query": "Rebecca", "query_cn": "丽贝卡", "folder": "rebecca", "icon": "Rebecca.png"},
     {"name": "Feixue (绯雪)", "query": "Feixue", "query_cn": "绯雪", "folder": "feixue", "icon": "Feixue.png"},
-    {"name": "Sigelika (西格莉卡)", "query": "Sigelika", "query_cn": "西格莉卡", "folder": "sigelika", "icon": "Sigrika.png"},
+    {"name": "Sigelika (西格莉卡)", "query": "Sigelika", "query_cn": "西格莉卡", "folder": "sigelika", "icon": "Sigelika.png"},
     {"name": "Aemeath (爱弥斯)", "query": "Aemeath", "query_cn": "爱弥斯", "folder": "aemeath", "icon": "Aemeath.png"},
     {"name": "Mornye (莫宁)", "query": "Mornye", "query_cn": "莫宁", "folder": "mornye", "icon": "Mornye.png"},
-    {"name": "Lynae (琳奈)", "query": "Lynae", "query_cn": "琳奈", "folder": "lynae", "icon": "Lynae.png"},
+    {"name": "Lynae (琳奈)", "query": "Lynae", "query_cn": "琳奈", "folder": "lynae", "icon": "Linne.png"},
     {"name": "Buling (卜灵)", "query": "Buling", "query_cn": "卜灵", "folder": "buling", "icon": "Buling.png"},
     {"name": "Xiakong (夏空)", "query": "Xiakong", "query_cn": "夏空", "folder": "xiakong", "icon": "Xiakong.png"},
     {"name": "Taoqi (桃祈)", "query": "Taoqi", "query_cn": "桃祈", "folder": "taoqi", "icon": "Taoqi.png"},
     {"name": "Cartethyia (卡提希娅)", "query": "Cartethyia", "query_cn": "卡提希娅", "folder": "cartethyia", "icon": "Cartethyia.png"},
     {"name": "Phrolova (弗洛洛)", "query": "Phrolova", "query_cn": "弗洛洛", "folder": "phrolova", "icon": "Phrolova.png"},
     {"name": "Lupa (露帕)", "query": "Lupa", "query_cn": "露帕", "folder": "lupa", "icon": "Lupa.png"},
-    {"name": "Zani (赞妮)", "query": "Zani", "query_cn": "赞妮", "folder": "zani", "icon": "Zani.png"},
+    {"name": "Zani (赞妮)", "query": "Zani", "query_cn": "赞妮", "folder": "zani", "icon": "Zanni.png"},
     {"name": "Shorekeeper (守岸人)", "query": "Shorekeeper", "query_cn": "守岸人", "folder": "shorekeeper", "icon": "Shorekeeper.png"},
     {"name": "Camellya (椿)", "query": "Camellya", "query_cn": "椿", "folder": "camellya", "icon": "Camellya.png"},
     {"name": "Changli (长离)", "query": "Changli", "query_cn": "长离", "folder": "changli", "icon": "Changli.png"},
     {"name": "Jinhsi (今汐)", "query": "Jinhsi", "query_cn": "今汐", "folder": "jinhsi", "icon": "Jinhsi.png"},
     {"name": "Augusta (奥古斯塔)", "query": "Augusta", "query_cn": "奥古斯塔", "folder": "augusta", "icon": "Augusta.png"},
-    {"name": "Iuno (尤诺)", "query": "Iuno", "query_cn": "尤诺", "folder": "iuno", "icon": "Iuno.png"},
+    {"name": "Iuno (尤诺)", "query": "Iuno", "query_cn": "尤诺", "folder": "iuno", "icon": "Yuno.png"},
+    {"name": "Gabriella (嘉贝莉娜)", "query": "Gabriella", "query_cn": "嘉贝莉娜", "folder": "gabriella", "icon": "Gabriella.png"},
+    {"name": "Rococo (洛可可)", "query": "Rococo", "query_cn": "洛可可", "folder": "rococo", "icon": "Rococo.png"},
     {"name": "Carlotta (珂莱塔)", "query": "Carlotta", "query_cn": "珂莱塔", "folder": "carlotta", "icon": "Carlotta.png"},
     {"name": "Phoebe (菲比)", "query": "Phoebe", "query_cn": "菲比", "folder": "phoebe", "icon": "Phoebe.png"},
     {"name": "Cantarella (坎特蕾拉)", "query": "Cantarella", "query_cn": "坎特蕾拉", "folder": "cantarella", "icon": "Cantarella.png"},
@@ -266,7 +268,8 @@ CHARACTER_LIST = [
     {"name": "Chixia (炽霞)", "query": "Chixia", "query_cn": "炽霞", "folder": "chixia", "icon": "Chixia.png"},
     {"name": "Baizhi (白芷)", "query": "Baizhi", "query_cn": "白芷", "folder": "baizhi", "icon": "Baizhi.png"},
     {"name": "Youhu (釉瑚)", "query": "Youhu", "query_cn": "釉瑚", "folder": "youhu", "icon": "Youhu.png"},
-    {"name": "Lumi (灯灯)", "query": "Lumi", "query_cn": "灯灯", "folder": "lumi", "icon": "LUMI.png"}
+    {"name": "Lumi (灯灯)", "query": "Lumi", "query_cn": "灯灯", "folder": "lumi", "icon": "Lumi.png"},
+    {"name": "Aalto (秋水)", "query": "Aalto", "query_cn": "秋水", "folder": "aalto", "icon": "Aalto.png"}
 ]
 
 
@@ -540,6 +543,8 @@ def get_image_base64_from_path(img_path):
 class MewModAPI:
     def __init__(self):
         self._window = None
+        self._cache = {}
+        self._cache_time = {}
 
     def set_window(self, window):
         self._window = window
@@ -589,12 +594,22 @@ class MewModAPI:
 
 
     def get_online_mods(self, source, query="", page=1):
+        cache_key = f"{source}_{query}_{page}"
+        now = time.time()
+        if cache_key in self._cache and (now - self._cache_time.get(cache_key, 0) < 300):
+            return self._cache[cache_key]
+
         if source == "gamebanana":
-            return self._fetch_gamebanana(query, page)
+            res = self._fetch_gamebanana(query, page)
         elif source == "nexus":
-            return self._fetch_nexus(query, page)
+            res = self._fetch_nexus(query, page)
         else:
-            return self._fetch_huihui(query, page)
+            res = self._fetch_huihui(query, page)
+
+        if res and res.get("success") and res.get("items"):
+            self._cache[cache_key] = res
+            self._cache_time[cache_key] = now
+        return res
 
     def _fetch_gamebanana(self, query="", page=1):
         try:
@@ -1576,6 +1591,43 @@ HTML_TEMPLATE = """
     box-shadow: var(--shadow-md), 0 0 20px rgba(0, 210, 255, 0.18);
   }
 
+  /* SKELETON SHIMMER CARDS */
+  .skeleton-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    height: 385px;
+    display: flex;
+    flex-direction: column;
+  }
+  .skeleton-img {
+    width: 100%;
+    height: 255px;
+    background: linear-gradient(90deg, #10121c 25%, #181b29 50%, #10121c 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.2s infinite linear;
+  }
+  .skeleton-body {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    background: var(--bg-surface);
+  }
+  .skeleton-line {
+    height: 12px;
+    background: linear-gradient(90deg, #161826 25%, #22263a 50%, #161826 75%);
+    background-size: 200% 100%;
+    border-radius: var(--radius-xs);
+    animation: shimmer 1.2s infinite linear;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
   .card-img-wrap {
     width: 100%;
     height: 255px;
@@ -2310,15 +2362,30 @@ HTML_TEMPLATE = """
     else loadMods(1);
   }
 
+  let currentStoreRequestId = 0;
+
   async function loadMods(page = 1) {
     currentStorePage = Math.max(1, page);
+    const reqId = ++currentStoreRequestId;
     const grid = document.getElementById('mod-grid');
-    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--text-muted);">⏳ Đang nạp danh sách mod từ ' + currentSource.toUpperCase() + '...</div>';
+    
+    grid.innerHTML = Array(10).fill(0).map(() => `
+      <div class="skeleton-card">
+        <div class="skeleton-img"></div>
+        <div class="skeleton-body">
+          <div class="skeleton-line" style="width: 85%;"></div>
+          <div class="skeleton-line" style="width: 55%; margin-top: 4px;"></div>
+          <div class="skeleton-line" style="width: 100%; height: 28px; margin-top: auto; border-radius: var(--radius-sm);"></div>
+        </div>
+      </div>
+    `).join('');
     
     const search = document.getElementById('search-input').value.trim();
     const activeQ = getActiveQuery();
     const q = (activeQ + ' ' + search).trim();
     const res = await pywebview.api.get_online_mods(currentSource, q, currentStorePage);
+    
+    if (reqId !== currentStoreRequestId) return;
     
     if (!res.success || !res.items || res.items.length === 0) {
       document.getElementById('context-mod-count').innerText = '0 Mod';
