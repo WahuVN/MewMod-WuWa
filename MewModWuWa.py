@@ -342,6 +342,15 @@ SPECIAL_CATEGORIES = [
         "gb_kw": "utility",
         "gb_cat_id": 29493,
         "folder": "qol"
+    },
+    {
+        "id": "others",
+        "name": "Khác (Others)",
+        "icon": "📦",
+        "huihui_kw": "其他",
+        "gb_kw": "misc",
+        "gb_cat_id": 29493,
+        "folder": "others"
     }
 ]
 
@@ -2421,7 +2430,7 @@ HTML_TEMPLATE = """
       document.getElementById('installed-view').style.display = 'flex';
       document.getElementById('direct-link-view').style.display = 'none';
       
-      if (currentSelectedItem && currentSelectedItem.count === 0 && currentCharFolder !== '') {
+      if (!currentSelectedItem || !currentSelectedItem.count || currentSelectedItem.count === 0 || currentCharFolder === '') {
         selectAllCharacters();
       } else {
         loadInstalled(currentCharFolder);
