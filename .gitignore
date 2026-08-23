@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+.cache/
+
+# Large binaries and tools (downloaded separately)
+MODORA/
+MODORA_DECOMPILED/
+WWMI/
+JASM/
+
+# Temporary and backup files
+*.BAK
+*.bak
+*.zip
+*.rar
+*.7z
+logs/
+.system_generated/
+scratch/
