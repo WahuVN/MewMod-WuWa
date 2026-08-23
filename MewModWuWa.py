@@ -453,7 +453,7 @@ def optimize_mod_structure(extracted_root, base_mod_name, fallback_folder="", on
                 except:
                     pass
                     
-    cover_path = os.path.join(final_mod_dir, ".JASM_Cover.jpg")
+    cover_path = os.path.join(final_mod_dir, ".MewMod_Cover.jpg")
     if not os.path.exists(cover_path):
         if preview_images:
             try:
@@ -468,7 +468,7 @@ def optimize_mod_structure(extracted_root, base_mod_name, fallback_folder="", on
             except:
                 pass
 
-    config_path = os.path.join(final_mod_dir, ".JASM_ModConfig.json")
+    config_path = os.path.join(final_mod_dir, ".MewMod_ModConfig.json")
     config_data = {
         "ModName": clean_name,
         "Author": author if author else "Modder",
@@ -1004,10 +1004,14 @@ class MewModAPI:
                     if os.path.isdir(full_m):
                         is_disabled = m_f.startswith("DISABLED_")
                         clean_n = m_f.replace("DISABLED_", "")
-                        cover_path = os.path.join(full_m, ".JASM_Cover.jpg")
+                        cover_path = os.path.join(full_m, ".MewMod_Cover.jpg")
+                        if not os.path.exists(cover_path):
+                            cover_path = os.path.join(full_m, ".JASM_Cover.jpg")
                         cover_b64 = get_image_base64_from_path(cover_path)
                         
-                        config_path = os.path.join(full_m, ".JASM_ModConfig.json")
+                        config_path = os.path.join(full_m, ".MewMod_ModConfig.json")
+                        if not os.path.exists(config_path):
+                            config_path = os.path.join(full_m, ".JASM_ModConfig.json")
                         author = "Modder"
                         note = ""
                         if os.path.exists(config_path):
@@ -1042,7 +1046,9 @@ class MewModAPI:
             return None
 
         keybinds = parse_mod_ini_keybinds(full_path)
-        config_path = os.path.join(full_path, ".JASM_ModConfig.json")
+        config_path = os.path.join(full_path, ".MewMod_ModConfig.json")
+        if not os.path.exists(config_path):
+            config_path = os.path.join(full_path, ".JASM_ModConfig.json")
         author = "Modder"
         desc = ""
         note = ""
@@ -1058,20 +1064,23 @@ class MewModAPI:
 
         # Scan all images inside mod directory
         all_imgs = []
-        cover_path = os.path.join(full_path, ".JASM_Cover.jpg")
+        cover_path = os.path.join(full_path, ".MewMod_Cover.jpg")
+        if not os.path.exists(cover_path):
+            cover_path = os.path.join(full_path, ".JASM_Cover.jpg")
         if os.path.exists(cover_path):
-            all_imgs.append({"path": cover_path, "name": "Ảnh Bìa Chính", "base64": get_image_base64_from_path(cover_path)})
+            all_imgs.append({"path": cover_path, "name": "Ảnh Bìa (.MewMod_Cover.jpg)", "base64": get_image_base64_from_path(cover_path)})
 
         for root, dirs, files in os.walk(full_path):
             for f in files:
                 p = os.path.join(root, f)
                 ext = os.path.splitext(f)[1].lower()
-                if ext in ['.jpg', '.jpeg', '.png', '.webp'] and f.lower() != ".jasm_cover.jpg":
+                if ext in ['.jpg', '.jpeg', '.png', '.webp'] and f.lower() not in [".mewmod_cover.jpg", ".jasm_cover.jpg"]:
                     b64 = get_image_base64_from_path(p)
                     if b64:
                         all_imgs.append({"path": p, "name": f, "base64": b64})
 
         if not os.path.exists(cover_path) and all_imgs:
+            cover_path = os.path.join(full_path, ".MewMod_Cover.jpg")
             try:
                 shutil.copy2(all_imgs[0]["path"], cover_path)
             except:
@@ -1122,11 +1131,17 @@ class MewModAPI:
         author = data.get("author", "")
         keybinds = data.get("keybinds", [])
         
-        config_path = os.path.join(full_path, ".JASM_ModConfig.json")
+        config_path = os.path.join(full_path, ".MewMod_ModConfig.json")
         cfg = {}
         if os.path.exists(config_path):
             try:
                 with open(config_path, "r", encoding="utf-8") as f:
+                    cfg = json.load(f)
+            except:
+                pass
+        elif os.path.exists(os.path.join(full_path, ".JASM_ModConfig.json")):
+            try:
+                with open(os.path.join(full_path, ".JASM_ModConfig.json"), "r", encoding="utf-8") as f:
                     cfg = json.load(f)
             except:
                 pass
@@ -2249,7 +2264,7 @@ HTML_TEMPLATE = """
           <!-- HERO PREVIEW COVER -->
           <div class="cover-box" id="insp-cover-box" onclick="openInspectorFullPreview()" title="Bấm để xem ảnh phóng to toàn màn hình">
             <img src="" id="insp-cover-img" class="cover-img" style="display: none;">
-            <div id="insp-no-cover" style="color: var(--text-muted); font-size: 11px;">Chưa có ảnh bìa (.JASM_Cover.jpg)</div>
+            <div id="insp-no-cover" style="color: var(--text-muted); font-size: 11px;">Chưa có ảnh bìa (.MewMod_Cover.jpg)</div>
             <div class="cover-zoom-hint" id="insp-zoom-hint" style="display: none;">🔍 Phóng To Ảnh</div>
           </div>
 
