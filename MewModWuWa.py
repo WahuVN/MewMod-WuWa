@@ -226,64 +226,64 @@ def translate_mod_title(zh_title):
 
 
 CHARACTER_LIST = [
-    {"name": "All Characters", "query": "", "query_cn": "", "folder": "", "icon": "All.png"},
-    {"name": "Qingxiao", "query": "Qingxiao", "query_cn": "清宵", "folder": "qingxiao", "icon": "Qingxiao.png"},
-    {"name": "Denia", "query": "Denia", "query_cn": "达妮娅", "folder": "dania", "icon": "Denia.png"},
-    {"name": "Suisui", "query": "Suisui", "query_cn": "穗穗", "folder": "suisui", "icon": "Suisui.png"},
-    {"name": "Suoming", "query": "Suoming", "query_cn": "索命", "folder": "suoming", "icon": "Suoming.png"},
-    {"name": "Yangyang Xuanling", "query": "Yangyang Xuanling", "query_cn": "玄翎", "folder": "yangyangxuanling", "icon": "Yangyang Xuanling.png"},
-    {"name": "Lucy", "query": "Lucy", "query_cn": "Lucy", "folder": "lucy", "icon": "Lucy.png"},
-    {"name": "Rebecca", "query": "Rebecca", "query_cn": "丽贝卡", "folder": "rebecca", "icon": "Rebecca.png"},
-    {"name": "Hiyuki", "query": "Hiyuki", "query_cn": "绯雪", "folder": "feixue", "icon": "Hiyuki.png"},
-    {"name": "Sigrika", "query": "Sigrika", "query_cn": "西格莉卡", "folder": "sigelika", "icon": "Sigrika.png"},
-    {"name": "Luuk Herssen", "query": "Luuk", "query_cn": "卢克", "folder": "luuk", "icon": "Luuk Herssen.png"},
-    {"name": "Mornye", "query": "Mornye", "query_cn": "莫宁", "folder": "mornye", "icon": "Mornye.png"},
-    {"name": "Lucilla", "query": "Lucilla", "query_cn": "夏空", "folder": "xiakong", "icon": "Lucilla.png"},
-    {"name": "Lynae", "query": "Lynae", "query_cn": "琳奈", "folder": "lynae", "icon": "Lynae.png"},
-    {"name": "Aemeath", "query": "Aemeath", "query_cn": "爱弥斯", "folder": "aemeath", "icon": "Aemeath.png"},
-    {"name": "Buling", "query": "Buling", "query_cn": "卜灵", "folder": "buling", "icon": "Buling.png"},
-    {"name": "Cartethyia", "query": "Cartethyia", "query_cn": "卡提希娅", "folder": "cartethyia", "icon": "Cartethyia.png"},
-    {"name": "Phrolova", "query": "Phrolova", "query_cn": "弗洛洛", "folder": "phrolova", "icon": "Phrolova.png"},
-    {"name": "Lupa", "query": "Lupa", "query_cn": "露帕", "folder": "lupa", "icon": "Lupa.png"},
-    {"name": "Zani", "query": "Zani", "query_cn": "赞妮", "folder": "zani", "icon": "Zani.png"},
-    {"name": "The Shorekeeper", "query": "Shorekeeper", "query_cn": "守岸人", "folder": "shorekeeper", "icon": "The Shorekeeper.png"},
-    {"name": "Camellya", "query": "Camellya", "query_cn": "椿", "folder": "camellya", "icon": "Camellya.png"},
-    {"name": "Changli", "query": "Changli", "query_cn": "长离", "folder": "changli", "icon": "Changli.png"},
-    {"name": "Jinhsi", "query": "Jinhsi", "query_cn": "今汐", "folder": "jinhsi", "icon": "Jinhsi.png"},
-    {"name": "Augusta", "query": "Augusta", "query_cn": "奥古斯塔", "folder": "augusta", "icon": "Augusta.png"},
-    {"name": "Iuno", "query": "Iuno", "query_cn": "尤诺", "folder": "iuno", "icon": "Iuno.png"},
-    {"name": "Galbrena", "query": "Galbrena", "query_cn": "嘉贝莉娜", "folder": "gabriella", "icon": "Galbrena.png"},
-    {"name": "Roccia", "query": "Roccia", "query_cn": "洛可可", "folder": "rococo", "icon": "Roccia.png"},
-    {"name": "Carlotta", "query": "Carlotta", "query_cn": "珂莱塔", "folder": "carlotta", "icon": "Carlotta.png"},
-    {"name": "Phoebe", "query": "Phoebe", "query_cn": "菲比", "folder": "phoebe", "icon": "Phoebe.png"},
-    {"name": "Cantarella", "query": "Cantarella", "query_cn": "坎特蕾拉", "folder": "cantarella", "icon": "Cantarella.png"},
-    {"name": "Chisa", "query": "Chisa", "query_cn": "千咲", "folder": "chisa", "icon": "Chisa.png"},
-    {"name": "Yinlin", "query": "Yinlin", "query_cn": "吟霖", "folder": "yinlin", "icon": "Yinlin.png"},
-    {"name": "Zhezhi", "query": "Zhezhi", "query_cn": "折枝", "folder": "zhezhi", "icon": "Zhezhi.png"},
-    {"name": "Xiangli Yao", "query": "Xiangli Yao", "query_cn": "相里要", "folder": "xiangliyao", "icon": "Xiangli Yao.png"},
-    {"name": "Rover", "query": "Rover", "query_cn": "漂泊者", "folder": "rover", "icon": "Rover.png"},
-    {"name": "Sanhua", "query": "Sanhua", "query_cn": "散华", "folder": "sanhua", "icon": "Sanhua.png"},
-    {"name": "Danjin", "query": "Danjin", "query_cn": "丹瑾", "folder": "danjin", "icon": "Danjin.png"},
-    {"name": "Yangyang", "query": "Yangyang", "query_cn": "秧秧", "folder": "yangyang", "icon": "Yangyang.png"},
-    {"name": "Jianxin", "query": "Jianxin", "query_cn": "鉴心", "folder": "jianxin", "icon": "Jianxin.png"},
-    {"name": "Jiyan", "query": "Jiyan", "query_cn": "忌炎", "folder": "jiyan", "icon": "Jiyan.png"},
-    {"name": "Calcharo", "query": "Calcharo", "query_cn": "卡卡罗", "folder": "calcharo", "icon": "Calcharo.png"},
-    {"name": "Encore", "query": "Encore", "query_cn": "安可", "folder": "encore", "icon": "Encore.png"},
-    {"name": "Verina", "query": "Verina", "query_cn": "维里奈", "folder": "verina", "icon": "Verina.png"},
-    {"name": "Chixia", "query": "Chixia", "query_cn": "炽霞", "folder": "chixia", "icon": "Chixia.png"},
-    {"name": "Baizhi", "query": "Baizhi", "query_cn": "白芷", "folder": "baizhi", "icon": "Baizhi.png"},
-    {"name": "Youhu", "query": "Youhu", "query_cn": "釉瑚", "folder": "youhu", "icon": "Youhu.png"},
-    {"name": "Lumi", "query": "Lumi", "query_cn": "灯灯", "folder": "lumi", "icon": "Lumi.png"},
-    {"name": "Aalto", "query": "Aalto", "query_cn": "秋水", "folder": "aalto", "icon": "Aalto.png"},
-    {"name": "Taoqi", "query": "Taoqi", "query_cn": "桃祈", "folder": "taoqi", "icon": "Taoqi.png"},
-    {"name": "Yuanwu", "query": "Yuanwu", "query_cn": "渊武", "folder": "yuanwu", "icon": "Yuanwu.png"},
-    {"name": "Lingyang", "query": "Lingyang", "query_cn": "凌阳", "folder": "lingyang", "icon": "Lingyang.png"},
-    {"name": "Brant", "query": "Brant", "query_cn": "布兰特", "folder": "brant", "icon": "Brant.png"},
-    {"name": "Mortefi", "query": "Mortefi", "query_cn": "莫特斐", "folder": "mortefi", "icon": "Mortefi.png"},
-    {"name": "Ciaccona", "query": "Ciaccona", "query_cn": "恰空", "folder": "ciaccona", "icon": "Ciaccona.png"},
-    {"name": "Qiuyuan", "query": "Qiuyuan", "query_cn": "秋渊", "folder": "qiuyuan", "icon": "Qiuyuan.png"},
-    {"name": "Hsin", "query": "Hsin", "query_cn": "辛", "folder": "hsin", "icon": "Hsin.png"},
-    {"name": "Jingran", "query": "Jingran", "query_cn": "景燃", "folder": "jingran", "icon": "Jingran.png"}
+    {"name": "All Characters", "query": "", "query_cn": "", "folder": "", "icon": "All.png", "gb_cat_id": None},
+    {"name": "Qingxiao", "query": "Qingxiao", "query_cn": "清宵", "folder": "qingxiao", "icon": "Qingxiao.png", "gb_cat_id": 46596},
+    {"name": "Denia", "query": "Denia", "query_cn": "达妮娅", "folder": "dania", "icon": "Denia.png", "gb_cat_id": 44602},
+    {"name": "Suisui", "query": "Suisui", "query_cn": "穗穗", "folder": "suisui", "icon": "Suisui.png", "gb_cat_id": 46595},
+    {"name": "Suoming", "query": "Suoming", "query_cn": "索命", "folder": "suoming", "icon": "Suoming.png", "gb_cat_id": None},
+    {"name": "Yangyang Xuanling", "query": "Yangyang Xuanling", "query_cn": "玄翎", "folder": "yangyangxuanling", "icon": "Yangyang Xuanling.png", "gb_cat_id": 46594},
+    {"name": "Lucy", "query": "Lucy", "query_cn": "Lucy", "folder": "lucy", "icon": "Lucy.png", "gb_cat_id": 46187},
+    {"name": "Rebecca", "query": "Rebecca", "query_cn": "丽贝卡", "folder": "rebecca", "icon": "Rebecca.png", "gb_cat_id": 46188},
+    {"name": "Hiyuki", "query": "Hiyuki", "query_cn": "绯雪", "folder": "feixue", "icon": "Hiyuki.png", "gb_cat_id": 44603},
+    {"name": "Sigrika", "query": "Sigrika", "query_cn": "西格莉卡", "folder": "sigelika", "icon": "Sigrika.png", "gb_cat_id": 44420},
+    {"name": "Luuk Herssen", "query": "Luuk", "query_cn": "卢克", "folder": "luuk", "icon": "Luuk Herssen.png", "gb_cat_id": 43761},
+    {"name": "Mornye", "query": "Mornye", "query_cn": "莫宁", "folder": "mornye", "icon": "Mornye.png", "gb_cat_id": 41930},
+    {"name": "Lucilla", "query": "Lucilla", "query_cn": "夏空", "folder": "xiakong", "icon": "Lucilla.png", "gb_cat_id": 44604},
+    {"name": "Lynae", "query": "Lynae", "query_cn": "琳奈", "folder": "lynae", "icon": "Lynae.png", "gb_cat_id": 41929},
+    {"name": "Aemeath", "query": "Aemeath", "query_cn": "爱弥斯", "folder": "aemeath", "icon": "Aemeath.png", "gb_cat_id": 43048},
+    {"name": "Buling", "query": "Buling", "query_cn": "卜灵", "folder": "buling", "icon": "Buling.png", "gb_cat_id": 41161},
+    {"name": "Cartethyia", "query": "Cartethyia", "query_cn": "卡提希娅", "folder": "cartethyia", "icon": "Cartethyia.png", "gb_cat_id": 37392},
+    {"name": "Phrolova", "query": "Phrolova", "query_cn": "弗洛洛", "folder": "phrolova", "icon": "Phrolova.png", "gb_cat_id": 38371},
+    {"name": "Lupa", "query": "Lupa", "query_cn": "露帕", "folder": "lupa", "icon": "Lupa.png", "gb_cat_id": 37891},
+    {"name": "Zani", "query": "Zani", "query_cn": "赞妮", "folder": "zani", "icon": "Zani.png", "gb_cat_id": 36665},
+    {"name": "The Shorekeeper", "query": "Shorekeeper", "query_cn": "守岸人", "folder": "shorekeeper", "icon": "The Shorekeeper.png", "gb_cat_id": 32220},
+    {"name": "Camellya", "query": "Camellya", "query_cn": "椿", "folder": "camellya", "icon": "Camellya.png", "gb_cat_id": 33179},
+    {"name": "Changli", "query": "Changli", "query_cn": "长离", "folder": "changli", "icon": "Changli.png", "gb_cat_id": 30265},
+    {"name": "Jinhsi", "query": "Jinhsi", "query_cn": "今汐", "folder": "jinhsi", "icon": "Jinhsi.png", "gb_cat_id": 30264},
+    {"name": "Augusta", "query": "Augusta", "query_cn": "奥古斯塔", "folder": "augusta", "icon": "Augusta.png", "gb_cat_id": 39143},
+    {"name": "Iuno", "query": "Iuno", "query_cn": "尤诺", "folder": "iuno", "icon": "Iuno.png", "gb_cat_id": 39624},
+    {"name": "Galbrena", "query": "Galbrena", "query_cn": "嘉贝莉娜", "folder": "gabriella", "icon": "Galbrena.png", "gb_cat_id": 40281},
+    {"name": "Roccia", "query": "Roccia", "query_cn": "洛可可", "folder": "rococo", "icon": "Roccia.png", "gb_cat_id": 34733},
+    {"name": "Carlotta", "query": "Carlotta", "query_cn": "珂莱塔", "folder": "carlotta", "icon": "Carlotta.png", "gb_cat_id": 34264},
+    {"name": "Phoebe", "query": "Phoebe", "query_cn": "菲比", "folder": "phoebe", "icon": "Phoebe.png", "gb_cat_id": 35119},
+    {"name": "Cantarella", "query": "Cantarella", "query_cn": "坎特蕾拉", "folder": "cantarella", "icon": "Cantarella.png", "gb_cat_id": 36003},
+    {"name": "Chisa", "query": "Chisa", "query_cn": "千咲", "folder": "chisa", "icon": "Chisa.png", "gb_cat_id": 41155},
+    {"name": "Yinlin", "query": "Yinlin", "query_cn": "吟霖", "folder": "yinlin", "icon": "Yinlin.png", "gb_cat_id": 30261},
+    {"name": "Zhezhi", "query": "Zhezhi", "query_cn": "折枝", "folder": "zhezhi", "icon": "Zhezhi.png", "gb_cat_id": 30472},
+    {"name": "Xiangli Yao", "query": "Xiangli Yao", "query_cn": "相里要", "folder": "xiangliyao", "icon": "Xiangli Yao.png", "gb_cat_id": 30471},
+    {"name": "Rover", "query": "Rover", "query_cn": "漂泊者", "folder": "rover", "icon": "Rover.png", "gb_cat_id": 30250},
+    {"name": "Sanhua", "query": "Sanhua", "query_cn": "散华", "folder": "sanhua", "icon": "Sanhua.png", "gb_cat_id": 30252},
+    {"name": "Danjin", "query": "Danjin", "query_cn": "丹瑾", "folder": "danjin", "icon": "Danjin.png", "gb_cat_id": 30255},
+    {"name": "Yangyang", "query": "Yangyang", "query_cn": "秧秧", "folder": "yangyang", "icon": "Yangyang.png", "gb_cat_id": 30246},
+    {"name": "Jianxin", "query": "Jianxin", "query_cn": "鉴心", "folder": "jianxin", "icon": "Jianxin.png", "gb_cat_id": 30263},
+    {"name": "Jiyan", "query": "Jiyan", "query_cn": "忌炎", "folder": "jiyan", "icon": "Jiyan.png", "gb_cat_id": 30256},
+    {"name": "Calcharo", "query": "Calcharo", "query_cn": "卡卡罗", "folder": "calcharo", "icon": "Calcharo.png", "gb_cat_id": 30262},
+    {"name": "Encore", "query": "Encore", "query_cn": "安可", "folder": "encore", "icon": "Encore.png", "gb_cat_id": 30253},
+    {"name": "Verina", "query": "Verina", "query_cn": "维里奈", "folder": "verina", "icon": "Verina.png", "gb_cat_id": 30248},
+    {"name": "Chixia", "query": "Chixia", "query_cn": "炽霞", "folder": "chixia", "icon": "Chixia.png", "gb_cat_id": 30247},
+    {"name": "Baizhi", "query": "Baizhi", "query_cn": "白芷", "folder": "baizhi", "icon": "Baizhi.png", "gb_cat_id": 30251},
+    {"name": "Youhu", "query": "Youhu", "query_cn": "釉瑚", "folder": "youhu", "icon": "Youhu.png", "gb_cat_id": 33791},
+    {"name": "Lumi", "query": "Lumi", "query_cn": "灯灯", "folder": "lumi", "icon": "Lumi.png", "gb_cat_id": 33764},
+    {"name": "Aalto", "query": "Aalto", "query_cn": "秋水", "folder": "aalto", "icon": "Aalto.png", "gb_cat_id": 30257},
+    {"name": "Taoqi", "query": "Taoqi", "query_cn": "桃祈", "folder": "taoqi", "icon": "Taoqi.png", "gb_cat_id": 30254},
+    {"name": "Yuanwu", "query": "Yuanwu", "query_cn": "渊武", "folder": "yuanwu", "icon": "Yuanwu.png", "gb_cat_id": 30260},
+    {"name": "Lingyang", "query": "Lingyang", "query_cn": "凌阳", "folder": "lingyang", "icon": "Lingyang.png", "gb_cat_id": 30259},
+    {"name": "Brant", "query": "Brant", "query_cn": "布兰特", "folder": "brant", "icon": "Brant.png", "gb_cat_id": 35523},
+    {"name": "Mortefi", "query": "Mortefi", "query_cn": "莫特斐", "folder": "mortefi", "icon": "Mortefi.png", "gb_cat_id": 30258},
+    {"name": "Ciaccona", "query": "Ciaccona", "query_cn": "恰空", "folder": "ciaccona", "icon": "Ciaccona.png", "gb_cat_id": 36990},
+    {"name": "Qiuyuan", "query": "Qiuyuan", "query_cn": "秋渊", "folder": "qiuyuan", "icon": "Qiuyuan.png", "gb_cat_id": 40825},
+    {"name": "Hsin", "query": "Hsin", "query_cn": "辛", "folder": "hsin", "icon": "Hsin.png", "gb_cat_id": None},
+    {"name": "Jingran", "query": "Jingran", "query_cn": "景燃", "folder": "jingran", "icon": "Jingran.png", "gb_cat_id": None}
 ]
 
 
@@ -295,6 +295,7 @@ SPECIAL_CATEGORIES = [
         "icon": "🏍️",
         "huihui_kw": "摩托",
         "gb_kw": "motor",
+        "gb_cat_id": 29493,
         "folder": "motorbikes"
     },
     {
@@ -303,6 +304,7 @@ SPECIAL_CATEGORIES = [
         "icon": "👥",
         "huihui_kw": "NPC",
         "gb_kw": "npc",
+        "gb_cat_id": 31838,
         "folder": "npcs"
     },
     {
@@ -311,6 +313,7 @@ SPECIAL_CATEGORIES = [
         "icon": "🗡️",
         "huihui_kw": "武器",
         "gb_kw": "weapon",
+        "gb_cat_id": 29493,
         "folder": "weapons"
     },
     {
@@ -319,6 +322,7 @@ SPECIAL_CATEGORIES = [
         "icon": "🪽",
         "huihui_kw": "翅膀",
         "gb_kw": "glider",
+        "gb_cat_id": 29493,
         "folder": "gliders"
     },
     {
@@ -327,6 +331,7 @@ SPECIAL_CATEGORIES = [
         "icon": "🎮",
         "huihui_kw": "界面",
         "gb_kw": "ui",
+        "gb_cat_id": 29496,
         "folder": "ui"
     },
     {
@@ -335,6 +340,7 @@ SPECIAL_CATEGORIES = [
         "icon": "🛠️",
         "huihui_kw": "功能",
         "gb_kw": "utility",
+        "gb_cat_id": 29493,
         "folder": "qol"
     }
 ]
@@ -597,6 +603,7 @@ class MewModAPI:
                 "name": c["name"],
                 "query": c["query"],
                 "query_cn": c.get("query_cn", ""),
+                "gb_cat_id": c.get("gb_cat_id"),
                 "folder": c["folder"],
                 "icon": avatar,
                 "count": count,
@@ -617,20 +624,21 @@ class MewModAPI:
                 "icon": sc["icon"],
                 "huihui_kw": sc["huihui_kw"],
                 "gb_kw": sc["gb_kw"],
+                "gb_cat_id": sc.get("gb_cat_id"),
                 "count": count,
                 "type": "category"
             })
         return {"characters": chars, "categories": cats}
 
 
-    def get_online_mods(self, source, query="", page=1):
-        cache_key = f"{source}_{query}_{page}"
+    def get_online_mods(self, source, query="", page=1, cat_id=None):
+        cache_key = f"{source}_{query}_{page}_{cat_id}"
         now = time.time()
         if cache_key in self._cache and (now - self._cache_time.get(cache_key, 0) < 300):
             return self._cache[cache_key]
 
         if source == "gamebanana":
-            res = self._fetch_gamebanana(query, page)
+            res = self._fetch_gamebanana(query, page, cat_id)
         elif source == "nexus":
             res = self._fetch_nexus(query, page)
         else:
@@ -641,10 +649,19 @@ class MewModAPI:
             self._cache_time[cache_key] = now
         return res
 
-    def _fetch_gamebanana(self, query="", page=1):
+    def _fetch_gamebanana(self, query="", page=1, cat_id=None):
         try:
             records = []
-            if not query:
+            if cat_id:
+                if query:
+                    url = f"https://gamebanana.com/apiv11/Util/Search/Results?_sModelName=Mod&_sSearchString={urllib.parse.quote(query)}&_aFilters[Generic_Category]={cat_id}&_nPage={page}&_nPerpage=30"
+                else:
+                    url = f"https://gamebanana.com/apiv11/Mod/Index?_nPage={page}&_nPerpage=30&_aFilters[Generic_Category]={cat_id}"
+                req = urllib.request.Request(url, headers=HEADERS)
+                with urllib.request.urlopen(req, context=SSL_CTX, timeout=10) as resp:
+                    data = json.loads(resp.read().decode('utf-8'))
+                    records = data.get("_aRecords", [])
+            elif not query:
                 import concurrent.futures
                 sub_pages = [(page - 1) * 3 + 1, (page - 1) * 3 + 2, (page - 1) * 3 + 3]
                 
@@ -2418,9 +2435,23 @@ HTML_TEMPLATE = """
     `).join('');
     
     const search = document.getElementById('search-input').value.trim();
-    const activeQ = getActiveQuery();
-    const q = (activeQ + ' ' + search).trim();
-    const res = await pywebview.api.get_online_mods(currentSource, q, currentStorePage);
+    let q = search;
+    let catId = null;
+
+    if (currentSource === 'gamebanana') {
+      if (currentSelectedItem && currentSelectedItem.name !== 'All Characters' && currentSelectedItem.name !== 'Tất Cả Nhân Vật') {
+        catId = currentSelectedItem.gb_cat_id || null;
+        if (!catId) {
+          const activeQ = getActiveQuery();
+          q = (activeQ + ' ' + search).trim();
+        }
+      }
+    } else {
+      const activeQ = getActiveQuery();
+      q = (activeQ + ' ' + search).trim();
+    }
+
+    const res = await pywebview.api.get_online_mods(currentSource, q, currentStorePage, catId);
     
     if (reqId !== currentStoreRequestId) return;
     
