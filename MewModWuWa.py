@@ -597,20 +597,35 @@ class MewModAPI:
             return self._fetch_huihui(query, page)
 
     def _fetch_gamebanana(self, query="", page=1):
-        if not query:
-            url = f"https://gamebanana.com/apiv11/Game/20357/Subfeed?_nPage={page}&_nPerpage=50&_sSort=new&_csvModelInclusions=Mod"
-        else:
-            url = f"https://gamebanana.com/apiv11/Util/Search/Results?_sModelName=Mod&_sSearchString={urllib.parse.quote(query)}&_aFilters[Generic_Game]=20357&_nPage={page}&_nPerpage=50"
-
         try:
-            req = urllib.request.Request(url, headers=HEADERS)
-            with urllib.request.urlopen(req, context=SSL_CTX, timeout=12) as resp:
-                data = json.loads(resp.read().decode('utf-8'))
+            records = []
+            if not query:
+                import concurrent.futures
+                sub_pages = [(page - 1) * 3 + 1, (page - 1) * 3 + 2, (page - 1) * 3 + 3]
                 
-            records = data.get("_aRecords", [])
+                def _fetch_sub(sp):
+                    u = f"https://gamebanana.com/apiv11/Game/20357/Subfeed?_nPage={sp}&_nPerpage=15&_sSort=new&_csvModelInclusions=Mod"
+                    try:
+                        req = urllib.request.Request(u, headers=HEADERS)
+                        with urllib.request.urlopen(req, context=SSL_CTX, timeout=8) as resp:
+                            data = json.loads(resp.read().decode('utf-8'))
+                            return data.get("_aRecords", [])
+                    except:
+                        return []
+                        
+                with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
+                    res_list = ex.map(_fetch_sub, sub_pages)
+                    for r_items in res_list:
+                        records.extend(r_items)
+            else:
+                url = f"https://gamebanana.com/apiv11/Util/Search/Results?_sModelName=Mod&_sSearchString={urllib.parse.quote(query)}&_aFilters[Generic_Game]=20357&_nPage={page}&_nPerpage=40"
+                req = urllib.request.Request(url, headers=HEADERS)
+                with urllib.request.urlopen(req, context=SSL_CTX, timeout=10) as resp:
+                    data = json.loads(resp.read().decode('utf-8'))
+                    records = data.get("_aRecords", [])
+                
             items = []
             for r in records:
-                # Chỉ lấy mục là Mod thực thụ
                 if r.get("_sModelName") and r.get("_sModelName") != "Mod":
                     continue
                 mod_id = r.get("_idRow")
@@ -627,7 +642,7 @@ class MewModAPI:
                     
                 items.append({
                     "id": str(mod_id),
-                    "title": title,
+                    "title": translate_mod_title(title),
                     "raw_title": title,
                     "author": author,
                     "likes": f"{likes} ❤️",
@@ -638,6 +653,7 @@ class MewModAPI:
             return {"success": True, "items": items, "page": page}
         except Exception as e:
             return {"success": False, "error": str(e), "items": [], "page": page}
+
 
 
     def _fetch_huihui(self, query="", page=1):
