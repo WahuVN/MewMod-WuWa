@@ -597,9 +597,10 @@ class MewModAPI:
             return self._fetch_huihui(query, page)
 
     def _fetch_gamebanana(self, query="", page=1):
-        url = f"https://gamebanana.com/apiv11/Game/20357/Subfeed?_nPage={page}&_nPerpage=24&_sSort=new"
-        if query:
-            url = f"https://gamebanana.com/apiv11/Util/Search/Results?_sModelName=Mod&_sSearchString={urllib.parse.quote(query)}&_aFilters[Generic_Game]=20357&_nPage={page}&_nPerpage=24"
+        if not query:
+            url = f"https://gamebanana.com/apiv11/Game/20357/Subfeed?_nPage={page}&_nPerpage=50&_sSort=new&_csvModelInclusions=Mod"
+        else:
+            url = f"https://gamebanana.com/apiv11/Util/Search/Results?_sModelName=Mod&_sSearchString={urllib.parse.quote(query)}&_aFilters[Generic_Game]=20357&_nPage={page}&_nPerpage=50"
 
         try:
             req = urllib.request.Request(url, headers=HEADERS)
@@ -609,6 +610,9 @@ class MewModAPI:
             records = data.get("_aRecords", [])
             items = []
             for r in records:
+                # Chỉ lấy mục là Mod thực thụ
+                if r.get("_sModelName") and r.get("_sModelName") != "Mod":
+                    continue
                 mod_id = r.get("_idRow")
                 title = r.get("_sName", "Mod")
                 author = r.get("_aSubmitter", {}).get("_sName", "Tác giả")
@@ -631,9 +635,10 @@ class MewModAPI:
                     "link": f"https://gamebanana.com/mods/{mod_id}",
                     "source": "gamebanana"
                 })
-            return {"success": True, "items": items}
+            return {"success": True, "items": items, "page": page}
         except Exception as e:
-            return {"success": False, "error": str(e), "items": []}
+            return {"success": False, "error": str(e), "items": [], "page": page}
+
 
     def _fetch_huihui(self, query="", page=1):
         if not query:
