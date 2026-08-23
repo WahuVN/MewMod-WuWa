@@ -1144,333 +1144,442 @@ HTML_TEMPLATE = """
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="referrer" content="no-referrer">
-<title>🐾 MewMod WuWa - Wuthering Waves Ultimate Mod Hub</title>
+<title>MewMod WuWa - Siêu Ứng Dụng Quản Lý Mod Wuthering Waves</title>
 <style>
+  /* =========================================================================
+     DESIGN SYSTEM TOKENS (ELITE PRODUCT UI/UX STANDARDS)
+     ========================================================================= */
   :root {
-    --bg-dark: #0f0f17;
-    --sidebar-bg: #161622;
-    --card-bg: #1c1c2b;
-    --card-hover: #26263b;
-    --accent: #f5c2e7;
-    --accent-glow: rgba(245, 194, 231, 0.35);
-    --green: #a6e3a1;
-    --green-glow: rgba(166, 227, 161, 0.4);
-    --blue: #89b4fa;
-    --text-main: #cdd6f4;
-    --text-muted: #898da0;
-    --border: #262638;
+    /* Surfaces */
+    --bg-canvas: #090a10;
+    --bg-sidebar: #0e1017;
+    --bg-surface: #131520;
+    --bg-elevated: #1a1d2c;
+    --bg-card: #12141f;
+    --bg-card-hover: #181b2a;
+    --bg-overlay: rgba(6, 7, 12, 0.82);
+
+    /* Borders & Separators */
+    --border-subtle: rgba(255, 255, 255, 0.07);
+    --border-medium: rgba(255, 255, 255, 0.12);
+    --border-focus: #00d2ff;
+
+    /* Typography Colors */
+    --text-primary: #f0f3fa;
+    --text-secondary: #9aa2bc;
+    --text-muted: #61677f;
+
+    /* Semantic & Accents */
+    --accent: #00d2ff;
+    --accent-hover: #33dcff;
+    --accent-subtle: rgba(0, 210, 255, 0.12);
+    --accent-purple: #a855f7;
+    --success: #10b981;
+    --success-subtle: rgba(16, 185, 129, 0.12);
+    --danger: #f43f5e;
+    --warning: #f59e0b;
+
+    /* Radii */
+    --radius-xs: 4px;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-full: 9999px;
+
+    /* Shadows & Transitions */
+    --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.25);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.65);
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
+
   * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
   body {
-    background-color: var(--bg-dark);
-    color: var(--text-main);
-    font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     height: 100vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    font-size: 13px;
+    line-height: 1.45;
   }
 
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.14); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
 
-  /* HEADER */
+  /* =========================================================================
+     TOP HEADER & BRAND BAR
+     ========================================================================= */
   header {
-    height: 60px;
-    background: var(--sidebar-bg);
-    border-bottom: 1px solid var(--border);
+    height: 56px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 16px;
     z-index: 10;
+    flex-shrink: 0;
   }
-  .brand { display: flex; align-items: center; gap: 10px; }
-  .brand-logo { font-size: 26px; }
-  .brand-title { font-size: 17px; font-weight: 800; color: var(--accent); letter-spacing: 0.5px; }
-  .brand-sub { font-size: 10px; color: var(--text-muted); }
 
-  .nav-tabs {
-    display: flex;
-    background: #0f0f17;
-    padding: 3px;
-    border-radius: 8px;
-    gap: 4px;
-  }
-  .nav-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    padding: 7px 14px;
-    font-size: 12px;
-    font-weight: 700;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .nav-btn.active {
-    background: var(--accent);
-    color: #11111b;
-    box-shadow: 0 0 12px var(--accent-glow);
-  }
-  .nav-btn:hover:not(.active) { color: var(--text-main); background: #1c1c2b; }
-
-  .actions { display: flex; gap: 8px; align-items: center; }
-  .btn-action {
-    background: #232336;
-    border: 1px solid var(--border);
-    color: var(--text-main);
-    padding: 7px 12px;
-    font-size: 11px;
-    font-weight: 700;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
+  .brand {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 10px;
+    cursor: default;
   }
-  .btn-action:hover { background: #31314a; transform: translateY(-1px); }
-  .btn-game { background: var(--green); color: #11111b; border: none; }
-  .btn-game:hover { background: #94e2d5; box-shadow: 0 0 12px var(--green-glow); }
-  .btn-jasm { background: #cba6f7; color: #11111b; border: none; }
-
-  /* MAIN CONTAINER */
-  .main-container { display: flex; flex: 1; overflow: hidden; }
-
-  /* LEFT SIDEBAR */
-  aside {
-    width: 250px;
-    background: var(--sidebar-bg);
-    border-right: 1px solid var(--border);
+  .brand-logo {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #00d2ff, #a855f7);
+    border-radius: var(--radius-sm);
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 2px 10px rgba(0, 210, 255, 0.3);
   }
-  .sidebar-header {
-    padding: 12px 14px 8px;
-    font-size: 11px;
+  .brand-text { display: flex; flex-direction: column; }
+  .brand-title {
+    font-size: 14px;
     font-weight: 800;
-    color: #fab387;
+    letter-spacing: 0.5px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .brand-badge {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 6px;
+    background: var(--accent-subtle);
+    color: var(--accent);
+    border: 1px solid rgba(0, 210, 255, 0.3);
+    border-radius: var(--radius-full);
     text-transform: uppercase;
   }
-  .char-list {
+  .brand-sub {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  /* SEGMENTED NAVIGATION PILL */
+  .nav-segmented {
+    display: flex;
+    background: var(--bg-canvas);
+    padding: 3px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    gap: 2px;
+  }
+  .nav-item {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .nav-item:hover:not(.active) {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .nav-item.active {
+    background: var(--bg-elevated);
+    color: var(--accent);
+    border: 1px solid var(--border-medium);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* HEADER ACTIONS */
+  .header-actions { display: flex; align-items: center; gap: 8px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid transparent;
+    outline: none;
+    white-space: nowrap;
+  }
+  .btn-secondary {
+    background: var(--bg-elevated);
+    border-color: var(--border-subtle);
+    color: var(--text-primary);
+  }
+  .btn-secondary:hover {
+    background: #222638;
+    border-color: var(--border-medium);
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #00d2ff 0%, #0077ff 100%);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 2px 12px rgba(0, 210, 255, 0.35);
+  }
+  .btn-primary:hover {
+    filter: brightness(1.12);
+    box-shadow: 0 4px 18px rgba(0, 210, 255, 0.5);
+    transform: translateY(-1px);
+  }
+  .btn-accent {
+    background: var(--accent-subtle);
+    color: var(--accent);
+    border-color: rgba(0, 210, 255, 0.25);
+  }
+  .btn-accent:hover {
+    background: rgba(0, 210, 255, 0.2);
+    border-color: var(--accent);
+  }
+  .btn-danger {
+    background: rgba(244, 63, 94, 0.12);
+    color: var(--danger);
+    border-color: rgba(244, 63, 94, 0.25);
+  }
+  .btn-danger:hover {
+    background: rgba(244, 63, 94, 0.22);
+    border-color: var(--danger);
+  }
+
+  /* =========================================================================
+     MAIN WORKSPACE LAYOUT
+     ========================================================================= */
+  .workspace {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* SIDEBAR */
+  aside {
+    width: 250px;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .sidebar-filter-wrap {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .sidebar-search {
+    width: 100%;
+    background: var(--bg-canvas);
+    border: 1px solid var(--border-subtle);
+    padding: 7px 10px 7px 30px;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 12px;
+    outline: none;
+    transition: var(--transition);
+  }
+  .sidebar-search:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-subtle);
+  }
+  .sidebar-search-icon {
+    position: absolute;
+    left: 20px;
+    top: 19px;
+    color: var(--text-muted);
+    font-size: 12px;
+    pointer-events: none;
+  }
+
+  .sidebar-scroll {
     flex: 1;
     overflow-y: auto;
-    padding: 0 8px 12px;
+    padding: 8px;
     display: flex;
     flex-direction: column;
     gap: 2px;
+  }
+  .sidebar-group-title {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    padding: 10px 8px 4px;
   }
   .char-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 6px 10px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: all 0.15s;
-    color: var(--text-main);
+    transition: var(--transition);
+    color: var(--text-secondary);
   }
-  .char-item:hover { background: #222234; }
-  .char-item.active { background: #2d2d44; color: var(--accent); font-weight: 700; }
-  .char-left { display: flex; align-items: center; gap: 10px; }
+  .char-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+  }
+  .char-item.active {
+    background: var(--bg-elevated);
+    color: var(--accent);
+    font-weight: 700;
+    border: 1px solid var(--border-medium);
+  }
+  .char-left {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    overflow: hidden;
+  }
   .char-avatar {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     object-fit: cover;
-    background: #11111b;
-    border: 1px solid var(--border);
+    background: var(--bg-canvas);
+    border: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+  }
+  .char-name {
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .char-badge {
-    background: #11111b;
-    color: var(--blue);
     font-size: 10px;
     font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 6px;
+    background: var(--bg-canvas);
+    color: var(--accent);
+    border: 1px solid var(--border-subtle);
+    padding: 1px 6px;
+    border-radius: var(--radius-full);
   }
 
-  /* CONTENT AREA */
-  main { flex: 1; display: flex; flex-direction: column; background: var(--bg-dark); overflow: hidden; }
+  /* MAIN CONTENT AREA */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-canvas);
+    overflow: hidden;
+  }
 
-  /* TOOLBAR / FILTER BAR */
-  .filter-bar {
-    height: 52px;
-    padding: 0 16px;
+  /* TOOLBAR / BREADCRUMB */
+  .toolbar {
+    height: 48px;
+    padding: 0 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    flex-shrink: 0;
+    gap: 12px;
+  }
+  .toolbar-left {
     display: flex;
     align-items: center;
     gap: 10px;
-    border-bottom: 1px solid var(--border);
-    background: #13131e;
   }
-  .search-box { flex: 1; position: relative; }
-  .search-box input {
-    width: 100%;
-    background: #1c1c2b;
-    border: 1px solid var(--border);
-    padding: 8px 12px 8px 34px;
-    border-radius: 8px;
-    color: var(--text-main);
-    font-size: 12px;
-    outline: none;
-  }
-  .search-box input:focus { border-color: var(--accent); }
-  .search-icon { position: absolute; left: 10px; top: 9px; font-size: 13px; color: var(--text-muted); }
-
-  /* VIEW CONTENT SPLIT (FOR INSTALLED VIEW: TABLE + RIGHT INSPECTOR) */
-  .installed-split-wrap {
-    flex: 1;
-    display: flex;
-    overflow: hidden;
-  }
-  .installed-table-area {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  /* TABLE STYLES (JASM STYLE) */
-  .mod-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-  }
-  .mod-table th {
-    text-align: left;
-    padding: 10px 12px;
-    background: #161624;
-    color: var(--text-muted);
+  .context-title {
+    font-size: 13px;
     font-weight: 700;
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    z-index: 2;
+    color: var(--text-primary);
   }
-  .mod-table td {
-    padding: 10px 12px;
-    border-bottom: 1px solid #1a1a28;
-    color: var(--text-main);
+  .context-count {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+    background: var(--bg-elevated);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border-subtle);
   }
-  .mod-table tr {
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .mod-table tr:hover { background: #1f1f30; }
-  .mod-table tr.selected { background: #2b2b40; border-left: 3px solid var(--accent); }
 
-  /* RIGHT INSPECTOR PANEL (JASM PRO) */
-  .inspector-panel {
-    width: 380px;
-    background: #141420;
-    border-left: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    padding: 16px;
-    gap: 14px;
-  }
-  .inspector-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .inspector-title { font-size: 14px; font-weight: 800; color: var(--accent); }
-  .cover-box {
-    width: 100%;
-    height: 190px;
-    background: #0b0b10;
-    border-radius: 10px;
-    overflow: hidden;
-    position: relative;
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .cover-img { width: 100%; height: 100%; object-fit: cover; }
-  
-  .inspector-field {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .inspector-label { font-size: 11px; font-weight: 700; color: var(--text-muted); }
-  .inspector-input {
-    background: #1c1c2b;
-    border: 1px solid var(--border);
-    padding: 8px 10px;
-    border-radius: 6px;
-    color: var(--text-main);
+  .toolbar-search {
+    width: 260px;
+    background: var(--bg-canvas);
+    border: 1px solid var(--border-subtle);
+    padding: 6px 12px 6px 30px;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
     font-size: 12px;
     outline: none;
+    transition: var(--transition);
   }
-  .inspector-input:focus { border-color: var(--accent); }
-
-  /* KEYBINDS LIST BOX (JASM MOD.INI) */
-  .keybinds-box {
-    background: #181826;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  .toolbar-search:focus {
+    width: 320px;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-subtle);
   }
-  .keybind-row {
+  .toolbar-search-wrap {
+    position: relative;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    background: #11111b;
-    padding: 6px 10px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
   }
-  .keybind-name { font-size: 11px; color: var(--accent); font-weight: 700; }
-  .keybind-input {
-    width: 60px;
-    text-align: center;
-    background: #222234;
-    border: 1px solid var(--border);
-    color: #a6e3a1;
-    font-weight: 800;
-    padding: 4px;
-    border-radius: 4px;
-    font-size: 11px;
-    outline: none;
+  .toolbar-search-icon {
+    position: absolute;
+    left: 10px;
+    color: var(--text-muted);
+    font-size: 12px;
+    pointer-events: none;
   }
 
-  /* GRID CARDS (ONLINE STORE - ANIME PORTRAIT DESIGN) */
+  /* =========================================================================
+     STORE GRID (ONLINE MODS - ELITE ANIME PORTRAIT CARDS)
+     ========================================================================= */
   .grid-container {
     flex: 1;
     overflow-y: auto;
     padding: 20px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 230px));
+    grid-template-columns: repeat(auto-fill, minmax(215px, 240px));
     gap: 18px;
     align-content: start;
   }
   .mod-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    height: 390px;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    height: 385px;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+    position: relative;
   }
   .mod-card:hover {
-    transform: translateY(-6px);
-    border-color: var(--accent);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6), 0 0 20px var(--accent-glow);
+    transform: translateY(-5px);
+    background: var(--bg-card-hover);
+    border-color: var(--border-focus);
+    box-shadow: var(--shadow-md), 0 0 20px rgba(0, 210, 255, 0.18);
   }
+
   .card-img-wrap {
     width: 100%;
-    height: 265px;
-    background: #0d0d14;
+    height: 255px;
+    background: #08090e;
     position: relative;
     overflow: hidden;
     cursor: pointer;
@@ -1485,42 +1594,45 @@ HTML_TEMPLATE = """
   .mod-card:hover .card-img {
     transform: scale(1.06);
   }
+
   .badge-like {
     position: absolute;
     top: 8px;
     right: 8px;
-    background: rgba(17, 17, 27, 0.85);
-    backdrop-filter: blur(6px);
-    color: #f38ba8;
+    background: rgba(10, 12, 18, 0.85);
+    backdrop-filter: blur(8px);
+    color: #ff5277;
     font-size: 11px;
     font-weight: 700;
     padding: 3px 8px;
-    border-radius: 6px;
+    border-radius: var(--radius-full);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
   }
+
   .card-body {
     padding: 10px 12px 12px;
     display: flex;
     flex-direction: column;
     flex: 1;
     justify-content: space-between;
-    background: #181827;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-subtle);
   }
   .card-title {
     font-size: 12px;
     font-weight: 700;
-    color: var(--accent);
-    line-height: 1.35;
+    color: var(--text-primary);
+    line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    min-height: 32px;
+    min-height: 34px;
     cursor: pointer;
   }
   .card-title:hover {
-    color: #fff;
-    text-decoration: underline;
+    color: var(--accent);
   }
   .card-author {
     font-size: 11px;
@@ -1528,59 +1640,252 @@ HTML_TEMPLATE = """
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
   }
-  .btn-dl-now {
-    background: linear-gradient(135deg, #a6e3a1, #89dceb);
-    color: #11111b;
+
+  .card-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .btn-card-dl {
+    flex: 1;
+    background: linear-gradient(135deg, #00d2ff, #0088ff);
+    color: #fff;
     border: none;
     padding: 7px 0;
     font-size: 11px;
-    font-weight: 800;
-    border-radius: 6px;
+    font-weight: 700;
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--transition);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 5px;
   }
-  .btn-dl-now:hover {
+  .btn-card-dl:hover {
     filter: brightness(1.15);
-    box-shadow: 0 0 14px var(--green-glow);
+    box-shadow: 0 0 12px rgba(0, 210, 255, 0.4);
+  }
+  .btn-card-album {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    padding: 7px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .btn-card-album:hover {
+    background: #25283d;
+    color: #fff;
+    border-color: var(--border-medium);
   }
 
+  /* =========================================================================
+     INSTALLED VIEW (JASM PRO DATA TABLE + RIGHT INSPECTOR)
+     ========================================================================= */
+  .installed-split {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+  .installed-table-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .mod-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+  }
+  .mod-table th {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--bg-elevated);
+    color: var(--text-muted);
+    font-weight: 700;
+    border-bottom: 1px solid var(--border-subtle);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .mod-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+  }
+  .mod-table tr {
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .mod-table tr:hover { background: rgba(255, 255, 255, 0.03); }
+  .mod-table tr.selected {
+    background: rgba(0, 210, 255, 0.07);
+    border-left: 3px solid var(--accent);
+  }
 
-  /* SWITCH TOGGLE */
-  .switch { position: relative; display: inline-block; width: 38px; height: 20px; }
+  /* RIGHT INSPECTOR PANEL */
+  .inspector {
+    width: 370px;
+    background: var(--bg-surface);
+    border-left: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 18px;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+  .inspector-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .inspector-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .cover-box {
+    width: 100%;
+    height: 180px;
+    background: #08090f;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cover-img { width: 100%; height: 100%; object-fit: cover; }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .form-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .form-input {
+    background: var(--bg-canvas);
+    border: 1px solid var(--border-subtle);
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 12px;
+    outline: none;
+    transition: var(--transition);
+  }
+  .form-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-subtle);
+  }
+
+  /* KEYBINDS LIST */
+  .keybinds-box {
+    background: var(--bg-canvas);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .keybind-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-surface);
+    padding: 7px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+  }
+  .keybind-name { font-size: 11px; color: var(--accent); font-weight: 700; }
+  .keybind-input {
+    width: 60px;
+    text-align: center;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-medium);
+    color: #10b981;
+    font-weight: 800;
+    padding: 4px;
+    border-radius: var(--radius-xs);
+    font-size: 11px;
+    outline: none;
+  }
+
+  /* TOGGLE SWITCH */
+  .switch { position: relative; display: inline-block; width: 36px; height: 20px; }
   .switch input { opacity: 0; width: 0; height: 0; }
-  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #313144; transition: .3s; border-radius: 20px; }
-  .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
-  input:checked + .slider { background-color: var(--green); }
-  input:checked + .slider:before { transform: translateX(18px); }
+  .slider {
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #2b2f42; transition: .25s; border-radius: var(--radius-full);
+  }
+  .slider:before {
+    position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px;
+    background-color: white; transition: .25s; border-radius: 50%;
+  }
+  input:checked + .slider { background-color: var(--success); }
+  input:checked + .slider:before { transform: translateX(16px); }
 
-  /* MODAL */
+  /* =========================================================================
+     MODAL DIALOGS
+     ========================================================================= */
   .modal-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px);
+    background: var(--bg-overlay);
+    backdrop-filter: blur(8px);
     display: none; align-items: center; justify-content: center; z-index: 100;
   }
   .modal-overlay.active { display: flex; }
-  .modal-box { background: #181825; border: 1px solid var(--border); width: 480px; border-radius: 14px; padding: 24px; }
-  .modal-title { font-size: 16px; font-weight: 800; color: var(--accent); margin-bottom: 12px; }
-  .progress-wrap { background: #11111b; height: 12px; border-radius: 6px; overflow: hidden; margin: 16px 0 8px; }
-  .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #a6e3a1, #89dceb); transition: width 0.1s; }
-  .progress-info { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); }
-
-  .log-panel {
-    height: 95px; background: #0b0b10; border-top: 1px solid var(--border); padding: 8px 14px;
-    font-family: 'Consolas', monospace; font-size: 11px; color: #a6adc8; overflow-y: auto;
+  .modal-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
   }
-  .log-entry { margin-bottom: 2px; }
 
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #2b2b40; border-radius: 4px; }
+  /* PROGRESS BAR */
+  .progress-wrap { background: var(--bg-canvas); height: 8px; border-radius: var(--radius-full); overflow: hidden; margin: 16px 0 8px; }
+  .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #00d2ff, #10b981); transition: width 0.15s; }
+
+  /* =========================================================================
+     BOTTOM STATUS BAR
+     ========================================================================= */
+  .status-bar {
+    height: 30px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    flex-shrink: 0;
+  }
+  .status-left { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+  .status-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style>
 </head>
 <body>
@@ -1589,35 +1894,41 @@ HTML_TEMPLATE = """
   <header>
     <div class="brand">
       <div class="brand-logo">🐾</div>
-      <div>
-        <div class="brand-title">MEWMOD WUWA</div>
-        <div class="brand-sub">Trình Quản Lý & Nạp Mod Wuthering Waves Độc Lập</div>
+      <div class="brand-text">
+        <div class="brand-title">
+          MEWMOD WUWA <span class="brand-badge">v4.0 Pro</span>
+        </div>
+        <div class="brand-sub">Hệ Thống Quản Lý & Nạp Mod Độc Lập</div>
       </div>
     </div>
 
-    <div class="nav-tabs">
-      <button class="nav-btn" id="tab-gb" onclick="switchStore('gamebanana')">🌐 GameBanana</button>
-      <button class="nav-btn" id="tab-hh" onclick="switchStore('huihui168')">🇨🇳 Huihui168</button>
-      <button class="nav-btn" id="tab-nx" onclick="switchStore('nexus')">🎮 NexusMods</button>
-      <button class="nav-btn active" id="tab-inst" onclick="switchView('installed')">📁 Quản Lý Mod Đã Cài</button>
-      <button class="nav-btn" id="tab-imp" onclick="switchView('direct_link')">⚡ Nạp Bằng Link</button>
+    <!-- SEGMENTED TABS -->
+    <div class="nav-segmented">
+      <button class="nav-item active" id="tab-gb" onclick="switchStore('gamebanana')">🌐 GameBanana</button>
+      <button class="nav-item" id="tab-hh" onclick="switchStore('huihui168')">🇨🇳 Huihui168</button>
+      <button class="nav-item" id="tab-nx" onclick="switchStore('nexus')">🎮 NexusMods</button>
+      <button class="nav-item" id="tab-inst" onclick="switchView('installed')">📁 Mods Đã Cài</button>
+      <button class="nav-item" id="tab-imp" onclick="switchView('direct_link')">⚡ Nạp Link</button>
     </div>
 
-    <div class="actions">
-      <button class="btn-action" style="color: #fab387;" onclick="openFixerModal()">🔧 Sửa Lỗi Mod</button>
-      <button class="btn-action" style="color: #89dceb;" onclick="pywebview.api.reload_wwmi_mods()">🔄 Nạp Lại (F10)</button>
-      <button class="btn-action" onclick="pywebview.api.open_folder('')">📂 Thư Mục Mods</button>
-      <button class="btn-action btn-game" onclick="pywebview.api.launch_game()">🎮 Chạy Game (WWMI)</button>
+    <!-- ACTIONS -->
+    <div class="header-actions">
+      <button class="btn btn-secondary" onclick="openFixerModal()">🔧 Sửa Lỗi Mod</button>
+      <button class="btn btn-secondary" onclick="pywebview.api.reload_wwmi_mods()">🔄 Nạp Lại (F10)</button>
+      <button class="btn btn-secondary" onclick="pywebview.api.open_folder('')">📂 Thư Mục</button>
+      <button class="btn btn-primary" onclick="pywebview.api.launch_game()">▶ Chạy Game (WWMI)</button>
     </div>
   </header>
 
-
-  <!-- MAIN CONTAINER -->
-  <div class="main-container">
+  <!-- MAIN WORKSPACE -->
+  <div class="workspace">
     <!-- LEFT SIDEBAR -->
     <aside>
-      <div class="sidebar-header">👤 Danh Sách Nhân Vật</div>
-      <div class="char-list" id="char-list">
+      <div class="sidebar-filter-wrap" style="position: relative;">
+        <span class="sidebar-search-icon">🔍</span>
+        <input type="text" class="sidebar-search" id="sidebar-filter-input" placeholder="Lọc nhân vật..." oninput="filterSidebarList(this.value)">
+      </div>
+      <div class="sidebar-scroll" id="char-list">
         <!-- Rendered via JS -->
       </div>
     </aside>
@@ -1625,301 +1936,301 @@ HTML_TEMPLATE = """
     <!-- CONTENT AREA -->
     <main>
       <!-- TOOLBAR -->
-      <div class="filter-bar" id="filter-bar">
-        <div class="search-box">
-          <span class="search-icon">🔍</span>
-          <input type="text" id="search-input" placeholder="Tìm kiếm Mod..." onkeypress="handleSearchKey(event)">
+      <div class="toolbar" id="filter-bar">
+        <div class="toolbar-left">
+          <span class="context-title" id="context-char-name">Tất Cả Nhân Vật</span>
+          <span class="context-count" id="context-mod-count">Đang tải...</span>
         </div>
 
-        <!-- JASM BULK ACTIONS (INSTALLED MODE) -->
-        <div id="installed-bulk-actions" style="display: flex; gap: 8px;">
-          <button class="btn-action" style="color: #fab387;" onclick="fixAllMods()">🔧 Tự Động Sửa Toàn Bộ Mod</button>
-          <button class="btn-action" style="color: #f38ba8;" onclick="toggleAllMods(false)">🚫 Tắt Hết Mod</button>
-          <button class="btn-action" style="color: var(--green);" onclick="toggleAllMods(true)">✅ Bật Hết Mod</button>
+        <!-- SEARCH BOX -->
+        <div class="toolbar-search-wrap">
+          <span class="toolbar-search-icon">🔍</span>
+          <input type="text" class="toolbar-search" id="search-input" placeholder="Tìm kiếm bản Mod..." onkeypress="handleSearchKey(event)">
         </div>
 
-
-        <button class="btn-action" onclick="reloadCurrentView()">🔄 Làm Mới</button>
+        <!-- JASM BULK ACTIONS -->
+        <div id="installed-bulk-actions" style="display: none; gap: 8px;">
+          <button class="btn btn-danger" style="padding: 5px 10px; font-size: 11px;" onclick="toggleAllModsForCurrentChar(false)">🚫 Tắt Hết</button>
+          <button class="btn btn-accent" style="padding: 5px 10px; font-size: 11px;" onclick="toggleAllModsForCurrentChar(true)">✅ Bật Hết</button>
+          <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="loadInstalled(currentCharFolder)">🔄 Làm Mới</button>
+        </div>
       </div>
 
-      <!-- ONLINE MOD GRID -->
-      <div class="grid-container" id="mod-grid" style="display: none;">
-        <!-- Rendered via JS -->
+      <!-- STORE MOD GRID -->
+      <div class="grid-container" id="mod-grid">
+        <!-- Mod Cards Rendered via JS -->
       </div>
 
-      <!-- INSTALLED VIEW (TABLE + RIGHT INSPECTOR) -->
-      <div class="installed-split-wrap" id="installed-view">
+      <!-- INSTALLED VIEW -->
+      <div class="installed-split" id="installed-view" style="display: none;">
         <div class="installed-table-area">
           <table class="mod-table">
             <thead>
               <tr>
-                <th style="width: 70px;">Bật/Tắt</th>
-                <th>Tên Bản Mod</th>
-                <th style="width: 120px;">Tác Giả</th>
-                <th style="width: 100px;">Thêm Mới</th>
-                <th style="width: 140px;">Ghi Chú</th>
+                <th style="width: 50px; text-align: center;">BẬT</th>
+                <th>TÊN BẢN MOD</th>
+                <th style="width: 140px;">TÁC GIẢ</th>
+                <th style="width: 130px;">TRẠNG THÁI</th>
+                <th style="width: 90px; text-align: right;">THAO TÁC</th>
               </tr>
             </thead>
             <tbody id="installed-tbody">
-              <!-- Rows -->
+              <!-- Installed Rows -->
             </tbody>
           </table>
         </div>
 
-        <!-- RIGHT INSPECTOR (JASM PRO) -->
-        <div class="inspector-panel" id="inspector-panel">
+        <!-- RIGHT INSPECTOR -->
+        <div class="inspector" id="inspector-panel">
           <div class="inspector-header">
-            <div class="inspector-title">🔍 Chi Tiết & Tùy Biến Mod</div>
-            <button class="btn-action" style="color: #f38ba8;" onclick="deleteSelectedMod()">🗑️ Xóa</button>
+            <div class="inspector-title">⚙️ THÔNG TIN MOD</div>
+            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="openSelectedModFolder()">📂 Mở Folder</button>
           </div>
 
           <div class="cover-box">
-            <img id="insp-cover" class="cover-img" src="https://via.placeholder.com/340x190">
+            <img src="" id="insp-cover-img" class="cover-img" style="display: none;">
+            <div id="insp-no-cover" style="color: var(--text-muted); font-size: 11px;">Chưa có ảnh bìa</div>
           </div>
 
-          <div class="inspector-field">
-            <label class="inspector-label">TÊN BẢN MOD:</label>
-            <input type="text" class="inspector-input" id="insp-name" readonly>
+          <div class="form-group">
+            <label class="form-label">Tên Bản Mod</label>
+            <input type="text" class="form-input" id="insp-name" placeholder="Tên mod...">
           </div>
 
-          <div class="inspector-field">
-            <label class="inspector-label">TÁC GIẢ:</label>
-            <input type="text" class="inspector-input" id="insp-author" placeholder="Tên tác giả...">
+          <div class="form-group">
+            <label class="form-label">Tác Giả</label>
+            <input type="text" class="form-input" id="insp-author" placeholder="Tác giả...">
           </div>
 
-          <div class="inspector-field">
-            <label class="inspector-label">GHI CHÚ RIÊNG:</label>
-            <input type="text" class="inspector-input" id="insp-note" placeholder="Ví dụ: Skin dạ hội chính, tóc dài...">
+          <div class="form-group">
+            <label class="form-label">Ghi Chú Riêng</label>
+            <input type="text" class="form-input" id="insp-note" placeholder="Ghi chú...">
           </div>
 
-          <div class="inspector-field">
-            <label class="inspector-label">⚙️ PHÍM TẮT PHỤ KIỆN (MOD.INI):</label>
+          <div class="form-group">
+            <label class="form-label">⚙️ Phím Tắt Phụ Kiện (mod.ini)</label>
             <div class="keybinds-box" id="insp-keybinds">
               <!-- Keybind Rows -->
             </div>
           </div>
 
-          <div style="display: flex; gap: 6px; margin-top: auto; flex-wrap: wrap;">
-            <button class="btn-action btn-game" style="flex: 1; justify-content: center; height: 34px;" onclick="saveSelectedModConfig()">
-              💾 Lưu Cấu Hình
-            </button>
-            <button class="btn-action" style="color: #fab387; height: 34px;" onclick="openFixerModal(selectedModDetail ? selectedModDetail.full_path : null)">
-              🔧 Sửa Lỗi Mod Này
-            </button>
-            <button class="btn-action" style="height: 34px;" onclick="openSelectedModFolder()">
-              📂 Thư Mục
-            </button>
+          <div style="display: flex; gap: 8px; margin-top: auto; padding-top: 10px;">
+            <button class="btn btn-primary" style="flex: 1;" onclick="saveSelectedModConfig()">💾 Lưu Cấu Hình</button>
+            <button class="btn btn-accent" onclick="openFixerModal(selectedModDetail ? selectedModDetail.full_path : null)">🔧 Sửa Lỗi</button>
           </div>
-
         </div>
       </div>
 
-      <!-- DIRECT LINK IMPORTER VIEW -->
-      <div id="direct-link-view" style="display: none; padding: 20px;">
-        <div style="background: #181825; border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; gap: 10px;">
-          <input type="text" id="direct-link-input" style="flex: 1; background: #11111b; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; color: var(--text-main); font-size: 12px; outline: none;" placeholder="Dán link Cloudreve, Hui盘, GameBanana, Baidu, Quark hoặc GG Drive vào đây...">
-          <button class="btn-action btn-game" onclick="submitDirectLink()">⚡ Nạp Ngay</button>
+      <!-- DIRECT LINK VIEW -->
+      <div id="direct-link-view" style="display: none; padding: 24px; max-width: 680px; margin: 0 auto; width: 100%;">
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-medium); border-radius: var(--radius-lg); padding: 24px;">
+          <div style="font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 8px;">⚡ Nạp Mod Bằng Đường Dẫn Trực Tiếp</div>
+          <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Hỗ trợ link Cloudreve, Hui盘, GameBanana, Google Drive, Baidu, Quark. Tự động giải nén và nạp vào game!</div>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="direct-link-input" class="form-input" style="flex: 1; padding: 10px 14px;" placeholder="Dán link tải vào đây...">
+            <button class="btn btn-primary" onclick="submitDirectLink()">⚡ Nạp Ngay</button>
+          </div>
         </div>
-      </div>
-
-      <!-- LOG PANEL -->
-      <div class="log-panel" id="log-panel">
-        <div class="log-entry">🐾 MewMod WuWa v4.0 Ultimate đã khởi động hoàn tất!</div>
       </div>
     </main>
   </div>
 
-  <!-- MOD FIXER VIETNAMESE MODAL -->
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <div class="status-left">
+      <div class="status-dot"></div>
+      <div class="status-text" id="status-log-text">MewMod WuWa v4.0 Ultimate đã sẵn sàng.</div>
+    </div>
+    <div>WWMI Engine: <span style="color: var(--accent); font-weight: 700;">Active</span></div>
+  </div>
+
+  <!-- MOD FIXER MODAL -->
   <div class="modal-overlay" id="fixer-modal">
-    <div class="modal-box" style="width: 880px; max-width: 95vw; background: #141420; border: 1px solid var(--border); padding: 22px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <div class="modal-box" style="width: 860px; max-width: 95vw; padding: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 22px;">🔧</span>
+          <span style="font-size: 20px;">🔧</span>
           <div>
-            <div class="modal-title" style="margin: 0; font-size: 16px; color: var(--accent);">TRÌNH SỬA LỖI MOD WUWA v3.6.0 (VIỆT HÓA 100%)</div>
-            <div style="font-size: 11px; color: var(--text-muted);">Quy tắc sửa lỗi Vertex & Mesh mới nhất từ Moonholder & MODORA (CFG 3.6.0)</div>
+            <div style="font-size: 15px; font-weight: 800; color: var(--accent);">BỘ CÔNG CỤ SỬA LỖI MOD WUWA v3.6.0 (VIỆT HÓA)</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Áp dụng quy tắc Vertex / Shader mới nhất từ Moonholder & MODORA</div>
           </div>
         </div>
         <div style="display: flex; gap: 8px;">
-          <button class="btn-action" style="font-size: 11px;" onclick="pywebview.api.launch_mod_fixer()">🚀 Mở Tool Gốc</button>
-          <button class="btn-action" style="color: #f38ba8; font-size: 16px;" onclick="closeFixerModal()">✕</button>
+          <button class="btn btn-secondary" onclick="pywebview.api.launch_mod_fixer()">🚀 Mở Tool Gốc</button>
+          <button class="btn btn-secondary" style="color: var(--danger);" onclick="closeFixerModal()">✕ Đóng</button>
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
-        <!-- TÙY CHỌN 1 -->
-        <div style="background: #1a1a2a; border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+        <div style="background: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px; display: flex; justify-content: space-between; align-items: center;">
           <div style="padding-right: 10px;">
             <div style="font-size: 12px; font-weight: 700; color: #fab387;">🏷️ Thêm Hash Trạng Thái Mới (Derived Hashes)</div>
-            <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Bổ sung hash thiếu (LOD Bias, Cantarella ướt, Chisa E, Aemeath tụ lực...) để hiển thị texture đúng.</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Bổ sung hash thiếu (LOD Bias, Cantarella ướt, Chisa E, Aemeath tụ lực...).</div>
           </div>
           <label class="switch"><input type="checkbox" id="fix-opt-derived" checked><span class="slider"></span></label>
         </div>
 
-        <!-- TÙY CHỌN 2 -->
-        <div style="background: #1a1a2a; border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="background: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px; display: flex; justify-content: space-between; align-items: center;">
           <div style="padding-right: 10px;">
             <div style="font-size: 12px; font-weight: 700; color: #89dceb;">🎨 Áp Dụng Texture Ổn Định (Stable Texture)</div>
-            <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Sử dụng RabbitFX để ổn định texture chống nhấp nháy (Cantarella, Chisa, Cartethyia...).</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Dùng RabbitFX ổn định texture chống nhấp nháy (Cantarella, Chisa...).</div>
           </div>
           <label class="switch"><input type="checkbox" id="fix-opt-stable"><span class="slider"></span></label>
         </div>
 
-        <!-- TÙY CHỌN 3 -->
-        <div style="background: #1a1a2a; border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="background: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px; display: flex; justify-content: space-between; align-items: center;">
           <div style="padding-right: 10px;">
             <div style="font-size: 12px; font-weight: 700; color: #a6e3a1;">🕳️ Sửa Lỗ Hổng Mesh / Mất Bộ Phận</div>
-            <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Khắc phục hiện tượng thủng thân, mất chân tay hoặc tàng hình sau update game.</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Khắc phục thủng thân, mất chân tay, tàng hình sau update game.</div>
           </div>
           <label class="switch"><input type="checkbox" id="fix-opt-mesh" checked><span class="slider"></span></label>
         </div>
 
-        <!-- TÙY CHỌN 4 -->
-        <div style="background: #1a1a2a; border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="background: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px; display: flex; justify-content: space-between; align-items: center;">
           <div style="padding-right: 10px;">
             <div style="font-size: 12px; font-weight: 700; color: #cba6f7;">🤖 Sửa Lỗi Cơ Khí Aemeath</div>
-            <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Tự động sửa lỗi dạng model cơ khí của Aemeath khi biến hình.</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Tự động sửa lỗi model dạng cơ khí của Aemeath.</div>
           </div>
           <label class="switch"><input type="checkbox" id="fix-opt-aemeath"><span class="slider"></span></label>
         </div>
       </div>
 
-      <!-- TARGET SELECTION -->
-      <div style="background: #12121c; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 14px;">
-        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">MỤC TIÊU SỬA LỖI HIỆN TẠI:</div>
-        <div id="fixer-target-label" style="font-size: 13px; font-weight: 700; color: #fab387;">Toàn bộ kho Mod trong WWMI</div>
+      <div style="background: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 10px; margin-bottom: 12px;">
+        <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Mục Tiêu Áp Dụng:</div>
+        <div id="fixer-target-label" style="font-size: 12px; font-weight: 700; color: var(--accent); margin-top: 2px;">Toàn bộ kho Mod trong WWMI</div>
       </div>
 
-      <!-- CONSOLE OUTPUT -->
-      <div style="height: 140px; background: #0b0b10; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-family: 'Consolas', monospace; font-size: 11px; color: #a6adc8; overflow-y: auto; margin-bottom: 14px;" id="fixer-console">
+      <div style="height: 130px; background: #06070a; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 10px; font-family: monospace; font-size: 11px; color: #a6adc8; overflow-y: auto; margin-bottom: 16px;" id="fixer-console">
         <div style="color: #6c7086;">[Hệ thống] Sẵn sàng thực thi lệnh sửa lỗi mod với cơ sở dữ liệu CFG 3.6.0...</div>
       </div>
 
-      <!-- ACTION BUTTONS -->
-      <div style="display: flex; gap: 10px; justify-content: flex-end;">
-        <button class="btn-action" style="color: #f38ba8;" onclick="executeFixerAction(true)">
-          🔄 Khôi Phục Bản Gốc (.BAK)
-        </button>
-        <button class="btn-action btn-game" style="padding: 10px 22px; font-size: 12px;" onclick="executeFixerAction(false)">
-          ⚡ Bắt Đầu Sửa Lỗi Ngay (1-Click)
-        </button>
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-danger" onclick="executeFixerAction(true)">🔄 Khôi Phục Bản Gốc (.BAK)</button>
+        <button class="btn btn-primary" onclick="executeFixerAction(false)">⚡ Bắt Đầu Sửa Lỗi Ngay (1-Click)</button>
       </div>
     </div>
   </div>
 
-  <!-- FULLSCREEN GALLERY LIGHTBOX MODAL -->
-
+  <!-- GALLERY LIGHTBOX MODAL -->
   <div class="modal-overlay" id="gallery-modal">
-    <div class="modal-box" style="width: 90vw; max-width: 1050px; height: 90vh; display: flex; flex-direction: column; padding: 18px; position: relative;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <div class="modal-box" style="width: 92vw; max-width: 1100px; height: 90vh; display: flex; flex-direction: column; padding: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <div>
-          <div class="modal-title" id="gal-title" style="margin-bottom: 2px;">Tên Mod</div>
+          <div style="font-size: 15px; font-weight: 800; color: var(--accent);" id="gal-title">Tên Mod</div>
           <div style="font-size: 11px; color: var(--text-muted);" id="gal-author">Tác giả: ...</div>
         </div>
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <button class="btn-action btn-game" id="gal-btn-dl" onclick="downloadCurrentGalleryMod()">⚡ Tự Động Tải & Nạp Ngay (1-Click)</button>
-          <button class="btn-action" style="color: #f38ba8; font-size: 16px;" onclick="closeGalleryModal()">✕</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" onclick="downloadCurrentGalleryMod()">⚡ Tải 1-Click Ngay</button>
+          <button class="btn btn-secondary" style="color: var(--danger);" onclick="closeGalleryModal()">✕ Đóng</button>
         </div>
       </div>
 
-      <!-- MAIN BIG PREVIEW WITH ARROWS -->
-      <div style="flex: 1; background: #0b0b10; border-radius: 10px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center;">
+      <div style="flex: 1; background: #06070a; border-radius: var(--radius-md); overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-subtle);">
         <img id="gal-big-img" src="" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-        <button class="btn-action" style="position: absolute; left: 14px; padding: 12px 16px; font-size: 18px; background: rgba(17,17,27,0.7); backdrop-filter: blur(4px);" onclick="prevGalleryImage()">◀</button>
-        <button class="btn-action" style="position: absolute; right: 14px; padding: 12px 16px; font-size: 18px; background: rgba(17,17,27,0.7); backdrop-filter: blur(4px);" onclick="nextGalleryImage()">▶</button>
-        <div style="position: absolute; bottom: 12px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; color: #fff;" id="gal-counter">1 / 1</div>
+        <button class="btn btn-secondary" style="position: absolute; left: 16px; padding: 12px 16px; font-size: 18px;" onclick="prevGalleryImage()">◀</button>
+        <button class="btn btn-secondary" style="position: absolute; right: 16px; padding: 12px 16px; font-size: 18px;" onclick="nextGalleryImage()">▶</button>
+        <div style="position: absolute; bottom: 12px; background: rgba(0,0,0,0.65); padding: 4px 12px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; color: #fff;" id="gal-counter">1 / 1</div>
       </div>
 
-      <!-- BOTTOM THUMBNAILS STRIP -->
-      <div style="height: 85px; display: flex; gap: 8px; overflow-x: auto; margin-top: 10px; padding: 4px 0;" id="gal-thumbs">
-        <!-- Thumbnails -->
+      <div style="height: 80px; display: flex; gap: 8px; overflow-x: auto; margin-top: 12px; padding: 4px 0;" id="gal-thumbs">
+        <!-- Thumbs -->
       </div>
     </div>
   </div>
 
   <!-- DOWNLOAD MODAL -->
   <div class="modal-overlay" id="dl-modal">
-    <div class="modal-box">
-      <div class="modal-title" id="dl-title">⚡ Đang Tự Động Tải & Nạp Mod...</div>
-      <div style="font-size: 12px; color: var(--text-muted);" id="dl-subtitle">Đang kết nối máy chủ tốc độ cao...</div>
+    <div class="modal-box" style="width: 460px; padding: 24px;">
+      <div style="font-size: 15px; font-weight: 800; color: var(--accent);" id="dl-title">⚡ Đang Tải & Cài Đặt Mod...</div>
+      <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;" id="dl-subtitle">Đang kết nối máy chủ tốc độ cao...</div>
       <div class="progress-wrap">
         <div class="progress-fill" id="dl-bar"></div>
       </div>
-      <div class="progress-info">
+      <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 6px;">
         <span id="dl-pct">0%</span>
-        <span id="dl-speed">Tốc độ: Đang tính toán...</span>
+        <span id="dl-speed">Đang tính...</span>
       </div>
     </div>
   </div>
 
-
 <script>
   let currentSource = 'gamebanana';
-  let currentView = 'installed'; // default to installed skins
+  let currentView = 'store';
   let currentChar = '';
   let currentCharFolder = '';
+  let currentSelectedItem = null;
+  let allCharactersData = { characters: [], categories: [] };
   let onlineMods = [];
-  let characters = [];
   let installedMods = [];
   let selectedModDetail = null;
+  let currentStorePage = 1;
 
-  window.addEventListener('pywebviewready', () => {
-    loadCharacters();
-    loadInstalled();
+  window.addEventListener('pywebviewready', async () => {
+    await loadCharacters();
+    loadMods(1);
   });
 
-  function appendLog(msg) {
-    const p = document.getElementById('log-panel');
-    const d = document.createElement('div');
-    d.className = 'log-entry';
-    d.innerText = msg;
-    p.appendChild(d);
-    p.scrollTop = p.scrollHeight;
-  }
-
-  let currentSelectedItem = null;
+  window.appendLog = function(msg) {
+    const el = document.getElementById('status-log-text');
+    if (el) el.innerText = msg;
+  };
 
   async function loadCharacters() {
-    const data = await pywebview.api.get_characters();
+    allCharactersData = await pywebview.api.get_characters();
+    renderSidebarList();
+  }
+
+  function filterSidebarList(kw) {
+    renderSidebarList(kw.trim().toLowerCase());
+  }
+
+  function renderSidebarList(filter = '') {
     const list = document.getElementById('char-list');
     list.innerHTML = '';
 
-    // SECTION 1: RESONATORS
-    const sec1 = document.createElement('div');
-    sec1.style = "font-size: 10px; font-weight: 800; color: var(--text-muted); padding: 8px 12px 4px; text-transform: uppercase; letter-spacing: 0.5px;";
-    sec1.innerText = "👤 Nhân Vật (Resonators)";
-    list.appendChild(sec1);
+    const addHeading = (text) => {
+      const h = document.createElement('div');
+      h.className = 'sidebar-group-title';
+      h.innerText = text;
+      list.appendChild(h);
+    };
 
-    (data.characters || []).forEach(c => {
+    addHeading('👤 Resonators (Nhân Vật)');
+
+    const filteredChars = allCharactersData.characters.filter(c => 
+      !filter || c.name.toLowerCase().includes(filter) || (c.query_cn && c.query_cn.toLowerCase().includes(filter))
+    );
+
+    filteredChars.forEach(c => {
       const item = document.createElement('div');
-      const isAct = currentSelectedItem && currentSelectedItem.name === c.name;
+      const isAct = currentSelectedItem ? currentSelectedItem.name === c.name : (c.name === 'Tất Cả Nhân Vật');
       item.className = `char-item ${isAct ? 'active' : ''}`;
       item.onclick = () => selectItem(c);
       item.innerHTML = `
         <div class="char-left">
-          <img src="${c.icon || 'https://via.placeholder.com/28'}" class="char-avatar">
-          <span style="font-size: 12px;">${c.name}</span>
+          <img src="${c.icon || ''}" class="char-avatar" onerror="this.src='https://via.placeholder.com/26'">
+          <span class="char-name">${c.name}</span>
         </div>
         ${c.count > 0 ? `<span class="char-badge">${c.count}</span>` : ''}
       `;
       list.appendChild(item);
     });
 
-    // SECTION 2: SPECIAL CATEGORIES (MOTORBIKES, NPCS, WEAPONS, GLIDERS, UI, QOL)
-    const sec2 = document.createElement('div');
-    sec2.style = "font-size: 10px; font-weight: 800; color: var(--text-muted); padding: 14px 12px 4px; text-transform: uppercase; letter-spacing: 0.5px; border-top: 1px solid var(--border); margin-top: 6px;";
-    sec2.innerText = "🏍️ Phương Tiện & Phụ Kiện";
-    list.appendChild(sec2);
+    addHeading('🏍️ Phương Tiện & Phụ Kiện');
 
-    (data.categories || []).forEach(c => {
+    const filteredCats = allCharactersData.categories.filter(sc => 
+      !filter || sc.name.toLowerCase().includes(filter)
+    );
+
+    filteredCats.forEach(sc => {
       const item = document.createElement('div');
-      const isAct = currentSelectedItem && currentSelectedItem.name === c.name;
+      const isAct = currentSelectedItem && currentSelectedItem.name === sc.name;
       item.className = `char-item ${isAct ? 'active' : ''}`;
-      item.onclick = () => selectItem(c);
+      item.onclick = () => selectItem(sc);
       item.innerHTML = `
         <div class="char-left">
-          <span style="font-size: 18px; width: 28px; text-align: center;">${c.icon}</span>
-          <span style="font-size: 12px; font-weight: 600;">${c.name}</span>
+          <span style="font-size: 16px; width: 26px; text-align: center;">${sc.icon}</span>
+          <span class="char-name">${sc.name}</span>
         </div>
         ${c.count > 0 ? `<span class="char-badge">${c.count}</span>` : ''}
       `;
@@ -1932,16 +2243,18 @@ HTML_TEMPLATE = """
     if (item.name === 'Tất Cả Nhân Vật') {
       currentChar = '';
       currentCharFolder = '';
+      document.getElementById('context-char-name').innerText = 'Tất Cả Nhân Vật';
     } else {
       currentChar = item.name;
       currentCharFolder = item.folder || '';
+      document.getElementById('context-char-name').innerText = item.name;
     }
 
-    loadCharacters();
+    renderSidebarList(document.getElementById('sidebar-filter-input').value);
     if (currentView === 'installed') {
       loadInstalled(currentCharFolder);
     } else if (currentView === 'store') {
-      loadMods();
+      loadMods(1);
     }
   }
 
@@ -1958,26 +2271,24 @@ HTML_TEMPLATE = """
     return currentSelectedItem.query || currentSelectedItem.name;
   }
 
-
-
   function switchStore(src) {
     currentSource = src;
     currentView = 'store';
-    ['tab-gb', 'tab-hh', 'tab-nx', 'tab-inst', 'tab-imp'].forEach(id => document.getElementById(id).className = 'nav-btn');
-    document.getElementById(src === 'gamebanana' ? 'tab-gb' : (src === 'nexus' ? 'tab-nx' : 'tab-hh')).className = 'nav-btn active';
+    ['tab-gb', 'tab-hh', 'tab-nx', 'tab-inst', 'tab-imp'].forEach(id => document.getElementById(id).className = 'nav-item');
+    document.getElementById(src === 'gamebanana' ? 'tab-gb' : (src === 'nexus' ? 'tab-nx' : 'tab-hh')).className = 'nav-item active';
     
     document.getElementById('filter-bar').style.display = 'flex';
     document.getElementById('installed-bulk-actions').style.display = 'none';
     document.getElementById('mod-grid').style.display = 'grid';
     document.getElementById('installed-view').style.display = 'none';
     document.getElementById('direct-link-view').style.display = 'none';
-    loadMods();
+    loadMods(1);
   }
 
   function switchView(view) {
     currentView = view;
-    ['tab-gb', 'tab-hh', 'tab-nx', 'tab-inst', 'tab-imp'].forEach(id => document.getElementById(id).className = 'nav-btn');
-    document.getElementById(view === 'installed' ? 'tab-inst' : 'tab-imp').className = 'nav-btn active';
+    ['tab-gb', 'tab-hh', 'tab-nx', 'tab-inst', 'tab-imp'].forEach(id => document.getElementById(id).className = 'nav-item');
+    document.getElementById(view === 'installed' ? 'tab-inst' : 'tab-imp').className = 'nav-item active';
     
     if (view === 'installed') {
       document.getElementById('filter-bar').style.display = 'flex';
@@ -1996,156 +2307,13 @@ HTML_TEMPLATE = """
 
   function reloadCurrentView() {
     if (currentView === 'installed') loadInstalled(currentCharFolder);
-    else loadMods();
+    else loadMods(1);
   }
-
-  async function loadInstalled(filterFolder = '') {
-    const tbody = document.getElementById('installed-tbody');
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">⏳ Đang đọc danh sách Mod...</td></tr>';
-    
-    installedMods = await pywebview.api.get_installed_mods(filterFolder);
-    
-    if (!installedMods || installedMods.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">Chưa có bản Mod nào cho nhân vật này.</td></tr>';
-      clearInspector();
-      return;
-    }
-
-    tbody.innerHTML = '';
-    installedMods.forEach((m, idx) => {
-      const tr = document.createElement('tr');
-      tr.id = `row-mod-${idx}`;
-      if (idx === 0) {
-        tr.className = 'selected';
-        inspectMod(m.full_path);
-      }
-      tr.onclick = () => {
-        document.querySelectorAll('#installed-tbody tr').forEach(r => r.className = '');
-        tr.className = 'selected';
-        inspectMod(m.full_path);
-      };
-
-      tr.innerHTML = `
-        <td onclick="event.stopPropagation();">
-          <label class="switch">
-            <input type="checkbox" ${m.is_disabled ? '' : 'checked'} onchange="toggleMod('${m.full_path.replace(/\\\\/g, '\\\\\\\\')}', this.checked)">
-            <span class="slider"></span>
-          </label>
-        </td>
-        <td style="font-weight: 700; color: ${m.is_disabled ? 'var(--text-muted)' : 'var(--accent)'};">
-          [${m.char_folder.toUpperCase()}] ${m.clean_name}
-        </td>
-        <td>${m.author}</td>
-        <td>${m.date}</td>
-        <td style="color: var(--text-muted);">${m.note || '-'}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  async function inspectMod(fullPath) {
-    selectedModDetail = await pywebview.api.get_mod_detail(fullPath);
-    if (!selectedModDetail) return;
-    
-    document.getElementById('insp-cover').src = selectedModDetail.cover || 'https://via.placeholder.com/340x190';
-    document.getElementById('insp-name').value = selectedModDetail.clean_name;
-    document.getElementById('insp-author').value = selectedModDetail.author || '';
-    document.getElementById('insp-note').value = selectedModDetail.note || '';
-
-    const kbContainer = document.getElementById('insp-keybinds');
-    kbContainer.innerHTML = '';
-    
-    if (!selectedModDetail.keybinds || selectedModDetail.keybinds.length === 0) {
-      kbContainer.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); text-align: center;">Bản Mod này không có phím tắt phụ kiện trong mod.ini</div>';
-      return;
-    }
-
-    selectedModDetail.keybinds.forEach((kb, idx) => {
-      const row = document.createElement('div');
-      row.className = 'keybind-row';
-      row.innerHTML = `
-        <span class="keybind-name">${kb.display_name}</span>
-        <input type="text" class="keybind-input" id="kb-input-${idx}" value="${kb.key}" onchange="updateKeybindValue(${idx}, this.value)">
-      `;
-      kbContainer.appendChild(row);
-    });
-  }
-
-  function updateKeybindValue(idx, newVal) {
-    if (selectedModDetail && selectedModDetail.keybinds[idx]) {
-      selectedModDetail.keybinds[idx].key = newVal.trim();
-    }
-  }
-
-  async function saveSelectedModConfig() {
-    if (!selectedModDetail) return;
-    selectedModDetail.author = document.getElementById('insp-author').value.trim();
-    selectedModDetail.note = document.getElementById('insp-note').value.trim();
-    
-    await pywebview.api.save_mod_detail(JSON.stringify(selectedModDetail));
-    loadInstalled(currentCharFolder);
-  }
-
-  function openSelectedModFolder() {
-    if (selectedModDetail) pywebview.api.open_folder(selectedModDetail.full_path);
-  }
-
-  async function deleteSelectedMod() {
-    if (!selectedModDetail) return;
-    if (confirm(`Bạn có chắc muốn xóa bản Mod '${selectedModDetail.clean_name}'?`)) {
-      await pywebview.api.delete_mod(selectedModDetail.full_path);
-      loadInstalled(currentCharFolder);
-      loadCharacters();
-    }
-  }
-
-  async function fixSelectedMod() {
-    if (!selectedModDetail) return;
-    const res = await pywebview.api.fix_selected_mod(selectedModDetail.full_path);
-    if (res.success) {
-      alert(`Đã sửa lỗi thành công cho bản mod '${selectedModDetail.clean_name}'!`);
-      inspectMod(selectedModDetail.full_path);
-    } else {
-      alert(`Lỗi: ${res.msg}`);
-    }
-  }
-
-  async function fixAllMods() {
-    if (confirm('Bạn có muốn tự động quét và sửa lỗi toàn bộ các bản Mod đã cài cho phiên bản game mới nhất?')) {
-      await pywebview.api.fix_all_installed_mods();
-      alert('Đang tiến hành sửa lỗi trong nền. Bạn có thể theo dõi tiến độ ở ô Nhật Ký bên dưới!');
-    }
-  }
-
-  function clearInspector() {
-
-    document.getElementById('insp-cover').src = 'https://via.placeholder.com/340x190';
-    document.getElementById('insp-name').value = '';
-    document.getElementById('insp-author').value = '';
-    document.getElementById('insp-note').value = '';
-    document.getElementById('insp-keybinds').innerHTML = '<div style="font-size: 11px; color: var(--text-muted); text-align: center;">Chọn một bản Mod để xem chi tiết</div>';
-  }
-
-  async function toggleMod(path, isEnable) {
-    await pywebview.api.toggle_mod(path, isEnable);
-    loadInstalled(currentCharFolder);
-  }
-
-  async function toggleAllMods(isEnable) {
-    if (!currentCharFolder) {
-      alert('Vui lòng chọn một nhân vật cụ thể ở danh sách bên trái!');
-      return;
-    }
-    await pywebview.api.toggle_all_mods_for_char(currentCharFolder, isEnable);
-    loadInstalled(currentCharFolder);
-  }
-
-  let currentStorePage = 1;
 
   async function loadMods(page = 1) {
     currentStorePage = Math.max(1, page);
     const grid = document.getElementById('mod-grid');
-    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">⏳ Đang tải trang ' + currentStorePage + ' từ ' + currentSource.toUpperCase() + '...</div>';
+    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--text-muted);">⏳ Đang nạp danh sách mod từ ' + currentSource.toUpperCase() + '...</div>';
     
     const search = document.getElementById('search-input').value.trim();
     const activeQ = getActiveQuery();
@@ -2153,32 +2321,231 @@ HTML_TEMPLATE = """
     const res = await pywebview.api.get_online_mods(currentSource, q, currentStorePage);
     
     if (!res.success || !res.items || res.items.length === 0) {
+      document.getElementById('context-mod-count').innerText = '0 Mod';
       grid.innerHTML = `
-        <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #f38ba8;">
-          ❌ Không tìm thấy bản mod nào ở trang ${currentStorePage}.
-          <div style="margin-top: 12px;">
-            <button class="btn-action" onclick="loadMods(1)">Quay lại trang 1</button>
-          </div>
+        <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--text-muted);">
+          <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
+          <div>Không tìm thấy bản mod nào ở trang ${currentStorePage}.</div>
+          <button class="btn btn-secondary" style="margin-top: 14px;" onclick="loadMods(1)">Quay lại trang 1</button>
         </div>
       `;
       return;
     }
     
     onlineMods = res.items;
+    document.getElementById('context-mod-count').innerText = `${onlineMods.length} Mod (Trang ${currentStorePage})`;
     renderGrid();
   }
 
   function changeStorePage(delta) {
     const target = currentStorePage + delta;
-    if (target >= 1) {
-      loadMods(target);
+    if (target >= 1) loadMods(target);
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById('mod-grid');
+    grid.innerHTML = '';
+    onlineMods.forEach((m) => {
+      const card = document.createElement('div');
+      card.className = 'mod-card';
+      card.innerHTML = `
+        <div class="card-img-wrap" onclick='openGalleryModal(${JSON.stringify(m)})'>
+          <img src="${m.img_url || 'https://via.placeholder.com/215x255'}" class="card-img" loading="lazy" onerror="this.src='https://via.placeholder.com/215x255?text=WuWa+Mod'">
+          <span class="badge-like">${m.likes}</span>
+        </div>
+        <div class="card-body">
+          <div>
+            <div class="card-title" title="${m.title}" onclick='openGalleryModal(${JSON.stringify(m)})'>${m.title}</div>
+            <div class="card-author">${m.author}</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-card-dl" onclick='downloadMod(${JSON.stringify(m)})'>
+              ⚡ Tải 1-Click
+            </button>
+            <button class="btn-card-album" title="Xem toàn bộ ảnh xem trước" onclick='openGalleryModal(${JSON.stringify(m)})'>
+              🖼️ Ảnh
+            </button>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    // PAGINATION
+    const pagBar = document.createElement('div');
+    pagBar.style = "grid-column: 1/-1; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 24px 0 40px;";
+    pagBar.innerHTML = `
+      <button class="btn btn-secondary" ${currentStorePage <= 1 ? 'disabled style="opacity: 0.4; pointer-events: none;"' : ''} onclick="changeStorePage(-1)">
+        ◀ Trang Trước
+      </button>
+      <span style="font-size: 13px; font-weight: 700; color: var(--accent); background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 6px 16px; border-radius: var(--radius-sm);">
+        Trang ${currentStorePage}
+      </span>
+      <button class="btn btn-secondary" onclick="changeStorePage(1)">
+        Trang Sau ▶
+      </button>
+    `;
+    grid.appendChild(pagBar);
+  }
+
+  /* INSTALLED MANAGER */
+  async function loadInstalled(filterFolder = '') {
+    const tbody = document.getElementById('installed-tbody');
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">⏳ Đang đọc danh sách Mod đã cài...</td></tr>';
+    
+    installedMods = await pywebview.api.get_installed_mods(filterFolder);
+    
+    if (!installedMods || installedMods.length === 0) {
+      document.getElementById('context-mod-count').innerText = '0 Mod';
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 50px; color: var(--text-muted);">Chưa có bản Mod nào được cài trong thư mục này.</td></tr>';
+      clearInspector();
+      return;
+    }
+
+    document.getElementById('context-mod-count').innerText = `${installedMods.length} Bản Mod Đã Cài`;
+    tbody.innerHTML = '';
+    installedMods.forEach((m, idx) => {
+      const tr = document.createElement('tr');
+      tr.id = `mod-row-${idx}`;
+      tr.onclick = (e) => {
+        if (e.target.type !== 'checkbox' && !e.target.classList.contains('slider')) {
+          inspectMod(m.full_path, idx);
+        }
+      };
+      
+      const isEn = m.is_enabled;
+      tr.innerHTML = `
+        <td style="text-align: center;">
+          <label class="switch">
+            <input type="checkbox" ${isEn ? 'checked' : ''} onchange="toggleMod('${m.full_path.replace(/\\\\/g, '\\\\\\\\')}', this.checked, ${idx})">
+            <span class="slider"></span>
+          </label>
+        </td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="${m.cover_base64 || 'https://via.placeholder.com/32'}" style="width: 32px; height: 32px; border-radius: var(--radius-xs); object-fit: cover; border: 1px solid var(--border-subtle);">
+            <div>
+              <div style="font-weight: 700; color: ${isEn ? 'var(--text-primary)' : 'var(--text-muted)'};">${m.name}</div>
+              <div style="font-size: 11px; color: var(--text-muted);">${m.char_folder}</div>
+            </div>
+          </div>
+        </td>
+        <td style="color: var(--text-secondary);">${m.author}</td>
+        <td>
+          <span style="font-size: 11px; font-weight: 700; color: ${isEn ? '#10b981' : 'var(--text-muted)'};">
+            ${isEn ? '● Đang Hoạt Động' : '○ Đã Tắt'}
+          </span>
+        </td>
+        <td style="text-align: right;">
+          <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="inspectMod('${m.full_path.replace(/\\\\/g, '\\\\\\\\')}', ${idx})">
+            Chi Tiết
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    if (installedMods.length > 0) {
+      inspectMod(installedMods[0].full_path, 0);
     }
   }
 
-  let currentGalleryImages = [];
-  let currentGalleryIndex = 0;
-  let activeGalleryMod = null;
+  async function toggleMod(fullPath, isEnable, rowIdx) {
+    await pywebview.api.toggle_mod(fullPath, isEnable);
+    loadInstalled(currentCharFolder);
+    loadCharacters();
+  }
 
+  async function toggleAllModsForCurrentChar(isEnable) {
+    if (!currentCharFolder) {
+      alert('Vui lòng chọn một nhân vật cụ thể bên trái để thao tác bật/tắt toàn bộ.');
+      return;
+    }
+    await pywebview.api.toggle_all_mods_for_char(currentCharFolder, isEnable);
+    loadInstalled(currentCharFolder);
+  }
+
+  async function inspectMod(fullPath, rowIdx = -1) {
+    if (rowIdx >= 0) {
+      document.querySelectorAll('#installed-tbody tr').forEach(r => r.className = '');
+      const selectedRow = document.getElementById(`mod-row-${rowIdx}`);
+      if (selectedRow) selectedRow.className = 'selected';
+    }
+
+    selectedModDetail = await pywebview.api.get_mod_detail(fullPath);
+    if (!selectedModDetail) return;
+
+    document.getElementById('insp-name').value = selectedModDetail.name || '';
+    document.getElementById('insp-author').value = selectedModDetail.author || '';
+    document.getElementById('insp-note').value = selectedModDetail.note || '';
+
+    const imgEl = document.getElementById('insp-cover-img');
+    const noImgEl = document.getElementById('insp-no-cover');
+    if (selectedModDetail.cover_base64) {
+      imgEl.src = selectedModDetail.cover_base64;
+      imgEl.style.display = 'block';
+      noImgEl.style.display = 'none';
+    } else {
+      imgEl.style.display = 'none';
+      noImgEl.style.display = 'block';
+    }
+
+    renderKeybinds(selectedModDetail.keybinds || []);
+  }
+
+  function renderKeybinds(kbs) {
+    const box = document.getElementById('insp-keybinds');
+    box.innerHTML = '';
+    if (!kbs || kbs.length === 0) {
+      box.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); text-align: center; padding: 10px;">Mod này không có phím tắt phụ kiện.</div>';
+      return;
+    }
+
+    kbs.forEach((kb, idx) => {
+      const row = document.createElement('div');
+      row.className = 'keybind-row';
+      row.innerHTML = `
+        <div class="keybind-name">${kb.display_name}</div>
+        <input type="text" class="keybind-input" id="kb-input-${idx}" value="${kb.key}" placeholder="Phím">
+      `;
+      box.appendChild(row);
+    });
+  }
+
+  async function saveSelectedModConfig() {
+    if (!selectedModDetail) return;
+    const newName = document.getElementById('insp-name').value;
+    const newAuthor = document.getElementById('insp-author').value;
+    const newNote = document.getElementById('insp-note').value;
+
+    const newKbs = (selectedModDetail.keybinds || []).map((kb, idx) => {
+      const val = document.getElementById(`kb-input-${idx}`).value.trim();
+      return { ...kb, key: val };
+    });
+
+    const res = await pywebview.api.save_mod_detail(selectedModDetail.full_path, newName, newAuthor, newNote, newKbs);
+    if (res.success) {
+      alert('Đã lưu cấu hình mod.ini thành công!');
+      loadInstalled(currentCharFolder);
+    } else {
+      alert('Lỗi lưu cấu hình: ' + res.error);
+    }
+  }
+
+  function openSelectedModFolder() {
+    if (selectedModDetail) pywebview.api.open_folder(selectedModDetail.full_path);
+  }
+
+  function clearInspector() {
+    document.getElementById('insp-name').value = '';
+    document.getElementById('insp-author').value = '';
+    document.getElementById('insp-note').value = '';
+    document.getElementById('insp-cover-img').style.display = 'none';
+    document.getElementById('insp-no-cover').style.display = 'block';
+    document.getElementById('insp-keybinds').innerHTML = '';
+  }
+
+  /* MOD FIXER MODAL */
   let currentFixerTarget = null;
 
   function openFixerModal(targetPath = null) {
@@ -2186,10 +2553,8 @@ HTML_TEMPLATE = """
     const label = document.getElementById('fixer-target-label');
     if (targetPath) {
       label.innerText = `Bản Mod: ${targetPath.split('\\\\').pop() || targetPath}`;
-      label.style.color = 'var(--accent)';
     } else {
       label.innerText = 'Toàn bộ kho Mod trong WWMI (Tự động quét tất cả nhân vật)';
-      label.style.color = '#fab387';
     }
     document.getElementById('fixer-console').innerHTML = '<div style="color: #6c7086;">[Hệ thống] Sẵn sàng thực thi lệnh sửa lỗi mod với cơ sở dữ liệu CFG 3.6.0...</div>';
     document.getElementById('fixer-modal').className = 'modal-overlay active';
@@ -2211,89 +2576,41 @@ HTML_TEMPLATE = """
     if (currentFixerTarget) {
       const res = await pywebview.api.run_advanced_fix(currentFixerTarget, derived, stable, mesh, isRollback);
       if (res.success) {
-        consoleBox.innerHTML += `<div style="color: #a6e3a1; white-space: pre-wrap;">${res.output || 'Đã hoàn tất thành công!'}</div>`;
+        consoleBox.innerHTML += `<div style="color: #10b981; white-space: pre-wrap;">${res.output || 'Đã hoàn tất thành công!'}</div>`;
         alert(isRollback ? 'Đã khôi phục file gốc từ .BAK thành công!' : 'Đã sửa lỗi thành công!');
         if (selectedModDetail) inspectMod(selectedModDetail.full_path);
       } else {
-        consoleBox.innerHTML += `<div style="color: #f38ba8;">Lỗi: ${res.msg}</div>`;
+        consoleBox.innerHTML += `<div style="color: var(--danger);">Lỗi: ${res.msg}</div>`;
       }
     } else {
-      consoleBox.innerHTML += `<div style="color: #89dceb;">🚀 Đang quét và sửa lỗi toàn bộ thư mục mod trong nền... Theo dõi thanh trạng thái bên dưới!</div>`;
+      consoleBox.innerHTML += `<div style="color: var(--accent);">🚀 Đang quét và sửa lỗi toàn bộ thư mục mod trong nền... Theo dõi thanh trạng thái bên dưới!</div>`;
       await pywebview.api.fix_all_installed_mods_advanced(derived, stable, mesh);
       alert('Đang tiến hành sửa lỗi toàn bộ Mod trong nền!');
     }
     consoleBox.scrollTop = consoleBox.scrollHeight;
   }
 
-  function renderGrid() {
-
-    const grid = document.getElementById('mod-grid');
-    grid.innerHTML = '';
-    onlineMods.forEach((m, idx) => {
-      const card = document.createElement('div');
-      card.className = 'mod-card';
-      card.innerHTML = `
-        <div class="card-img-wrap" style="cursor: pointer;" onclick='openGalleryModal(${JSON.stringify(m)})'>
-          <img src="${m.img_url || 'https://via.placeholder.com/210x290'}" class="card-img" loading="lazy" onerror="this.src='https://via.placeholder.com/210x290?text=WuWa+Mod'">
-          <span class="badge-like">${m.likes}</span>
-        </div>
-        <div class="card-body">
-          <div>
-            <div class="card-title" title="${m.title}" style="cursor: pointer;" onclick='openGalleryModal(${JSON.stringify(m)})'>${m.title}</div>
-            <div class="card-author">Tác giả: ${m.author}</div>
-          </div>
-          <div style="display: flex; gap: 6px;">
-            <button class="btn-dl-now" style="flex: 1;" onclick='downloadMod(${JSON.stringify(m)})'>
-              ⚡ Tải 1-Click
-            </button>
-            <button class="btn-action" style="padding: 6px 10px; font-size: 11px; background: #28283d;" title="Xem toàn bộ album ảnh" onclick='openGalleryModal(${JSON.stringify(m)})'>
-              🖼️ Ảnh
-            </button>
-          </div>
-        </div>
-      `;
-      grid.appendChild(card);
-    });
-
-    // PAGINATION BAR
-    const pagBar = document.createElement('div');
-    pagBar.style = "grid-column: 1/-1; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 24px 0 40px; margin-top: 10px; border-top: 1px solid var(--border);";
-    pagBar.innerHTML = `
-      <button class="btn-action" style="padding: 8px 16px; font-weight: 700;" ${currentStorePage <= 1 ? 'disabled style="opacity: 0.5; pointer-events: none;"' : ''} onclick="changeStorePage(-1)">
-        ◀ Trang Trước
-      </button>
-      <span style="font-size: 14px; font-weight: 800; color: var(--accent); background: #181825; border: 1px solid var(--border); padding: 8px 18px; border-radius: 8px;">
-        Trang ${currentStorePage}
-      </span>
-      <button class="btn-action" style="padding: 8px 16px; font-weight: 700;" onclick="changeStorePage(1)">
-        Trang Sau ▶
-      </button>
-    `;
-    grid.appendChild(pagBar);
-  }
-
+  /* GALLERY LIGHTBOX */
+  let currentGalleryImages = [];
+  let currentGalleryIndex = 0;
+  let activeGalleryMod = null;
 
   async function openGalleryModal(modObj) {
     activeGalleryMod = modObj;
     document.getElementById('gal-title').innerText = modObj.title;
-    document.getElementById('gal-author').innerText = `Tác giả: ${modObj.author} | Nguồn: ${modObj.source}`;
+    document.getElementById('gal-author').innerText = `Tác giả: ${modObj.author} | Nguồn: ${modObj.source.toUpperCase()}`;
     document.getElementById('gal-big-img').src = modObj.img_url;
-    document.getElementById('gal-counter').innerText = '⏳ Đang tải toàn bộ album ảnh...';
+    document.getElementById('gal-counter').innerText = '⏳ Đang nạp toàn bộ album ảnh xem trước...';
     document.getElementById('gal-thumbs').innerHTML = '';
     document.getElementById('gallery-modal').className = 'modal-overlay active';
 
     currentGalleryImages = [modObj.img_url];
-    currentGalleryIndex = 0;
-
     const res = await pywebview.api.get_mod_gallery_images(modObj.source, modObj.id, modObj.link);
-    if (res.success && res.images && res.images.length > 0) {
+    if (res && res.success && res.images && res.images.length > 0) {
       currentGalleryImages = res.images;
-      renderGalleryThumbs();
-      setGalleryImage(0);
-    } else {
-      renderGalleryThumbs();
-      document.getElementById('gal-counter').innerText = '1 / 1';
     }
+    renderGalleryThumbs();
+    setGalleryImage(0);
   }
 
   function renderGalleryThumbs() {
@@ -2302,7 +2619,7 @@ HTML_TEMPLATE = """
     currentGalleryImages.forEach((imgUrl, idx) => {
       const thumb = document.createElement('img');
       thumb.src = imgUrl;
-      thumb.style = `height: 75px; width: 110px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid ${idx === currentGalleryIndex ? 'var(--accent)' : 'var(--border)'}; transition: all 0.2s;`;
+      thumb.style = `height: 70px; width: 100px; object-fit: cover; border-radius: var(--radius-xs); cursor: pointer; border: 2px solid ${idx === currentGalleryIndex ? 'var(--accent)' : 'transparent'}; opacity: ${idx === currentGalleryIndex ? '1' : '0.6'}; transition: var(--transition); flex-shrink: 0;`;
       thumb.onclick = () => setGalleryImage(idx);
       thumbsBox.appendChild(thumb);
     });
