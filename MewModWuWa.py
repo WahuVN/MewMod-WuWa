@@ -369,7 +369,17 @@ def detect_character(text_hints, ini_content=""):
         f = item["folder"]
         if not f:
             continue
-        if f.lower() in combined or item["name"].lower() in combined or item["query"].lower() in combined:
+        q = item.get("query", "").lower()
+        q_cn = item.get("query_cn", "").lower()
+        name_l = item.get("name", "").lower()
+        if f.lower() in combined or (q and q in combined) or (q_cn and q_cn in combined) or (name_l and name_l in combined):
+            return f
+    for sc in SPECIAL_CATEGORIES:
+        f = sc["folder"]
+        hh_kw = sc.get("huihui_kw", "").lower()
+        gb_kw = sc.get("gb_kw", "").lower()
+        name_l = sc.get("name", "").lower()
+        if f.lower() in combined or (hh_kw and hh_kw in combined) or (gb_kw and gb_kw in combined) or (name_l and name_l in combined):
             return f
     return "others"
 
@@ -389,7 +399,7 @@ def extract_archive(archive_path, extract_dir, password="huihui"):
         print("7z Error:", e)
     return False
 
-def optimize_mod_structure(extracted_root, base_mod_name):
+def optimize_mod_structure(extracted_root, base_mod_name, fallback_folder=""):
     ini_dirs = []
     for root, dirs, files in os.walk(extracted_root):
         for f in files:
@@ -410,6 +420,8 @@ def optimize_mod_structure(extracted_root, base_mod_name):
             ini_content = ""
 
     char_folder_name = detect_character([base_mod_name, os.path.basename(source_dir)], ini_content)
+    if char_folder_name == "others" and fallback_folder and fallback_folder != "all":
+        char_folder_name = fallback_folder
     char_dest_path = os.path.join(WWMI_CHAR_PATH, char_folder_name)
     os.makedirs(char_dest_path, exist_ok=True)
     
@@ -821,11 +833,12 @@ class MewModAPI:
         mod_id = mod.get("id")
         title = mod.get("title")
         link = mod.get("link")
+        context_folder = mod.get("context_folder", "")
         
-        threading.Thread(target=self._download_worker, args=(source, mod_id, title, link), daemon=True).start()
+        threading.Thread(target=self._download_worker, args=(source, mod_id, title, link, context_folder), daemon=True).start()
         return {"started": True}
 
-    def _download_worker(self, source, mod_id, title, link):
+    def _download_worker(self, source, mod_id, title, link, context_folder=""):
         self.log(f"🚀 Bắt đầu tự động tải 1-Click: {title}...")
         self._window.evaluate_js("window.showDownloadModal();")
         
@@ -867,7 +880,7 @@ class MewModAPI:
                 if os.path.exists(temp_ext):
                     shutil.rmtree(temp_ext, ignore_errors=True)
                 extract_archive(temp_file, temp_ext, password="")
-                char_f, clean_n, final_d = optimize_mod_structure(temp_ext, fname)
+                char_f, clean_n, final_d = optimize_mod_structure(temp_ext, fname, context_folder)
                 shutil.rmtree(temp_ext, ignore_errors=True)
                 try:
                     os.remove(temp_file)
@@ -923,7 +936,7 @@ class MewModAPI:
                 if os.path.exists(temp_ext):
                     shutil.rmtree(temp_ext, ignore_errors=True)
                 extract_archive(temp_file, temp_ext, password="huihui")
-                char_f, clean_n, final_d = optimize_mod_structure(temp_ext, filename)
+                char_f, clean_n, final_d = optimize_mod_structure(temp_ext, filename, context_folder)
                 shutil.rmtree(temp_ext, ignore_errors=True)
                 try:
                     os.remove(temp_file)
@@ -2391,6 +2404,11 @@ HTML_TEMPLATE = """
     loadMods(1);
   }
 
+  function selectAllCharacters() {
+    const allItem = (allCharactersData.characters && allCharactersData.characters[0]) || { name: 'All Characters', folder: '' };
+    selectItem(allItem);
+  }
+
   function switchView(view) {
     currentView = view;
     ['tab-gb', 'tab-hh', 'tab-nx', 'tab-inst', 'tab-imp'].forEach(id => document.getElementById(id).className = 'nav-item');
@@ -2402,7 +2420,12 @@ HTML_TEMPLATE = """
       document.getElementById('mod-grid').style.display = 'none';
       document.getElementById('installed-view').style.display = 'flex';
       document.getElementById('direct-link-view').style.display = 'none';
-      loadInstalled(currentCharFolder);
+      
+      if (currentSelectedItem && currentSelectedItem.count === 0 && currentCharFolder !== '') {
+        selectAllCharacters();
+      } else {
+        loadInstalled(currentCharFolder);
+      }
     } else {
       document.getElementById('filter-bar').style.display = 'none';
       document.getElementById('mod-grid').style.display = 'none';
@@ -2532,7 +2555,25 @@ HTML_TEMPLATE = """
     
     if (!installedMods || installedMods.length === 0) {
       document.getElementById('context-mod-count').innerText = '0 Mod';
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 50px; color: var(--text-muted);">Chưa có bản Mod nào được cài trong thư mục này.</td></tr>';
+      const allItem = (allCharactersData.characters && allCharactersData.characters[0]);
+      const totalAll = (allItem && allItem.count) || 0;
+      let emptyHtml = `
+        <div style="padding: 40px 20px; text-align: center; color: var(--text-muted);">
+          <div style="font-size: 32px; margin-bottom: 10px;">📂</div>
+          <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">
+            Chưa có bản Mod nào được cài trong thư mục <b>${currentChar || filterFolder || 'này'}</b>.
+          </div>
+          ${totalAll > 0 ? `
+            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">
+              Hiện đang có <b style="color: var(--accent);">${totalAll}</b> bản Mod trong các nhân vật khác.
+            </div>
+            <button class="btn btn-primary" onclick="selectAllCharacters()" style="padding: 8px 18px; font-weight: 700; box-shadow: var(--shadow-glow);">
+              👁️ Xem Toàn Bộ ${totalAll} Bản Mod Đã Cài (All Characters)
+            </button>
+          ` : ''}
+        </div>
+      `;
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px;">${emptyHtml}</td></tr>`;
       clearInspector();
       return;
     }
@@ -2799,13 +2840,17 @@ HTML_TEMPLATE = """
 
 
   function downloadMod(modObj) {
+    const payload = Object.assign({}, modObj, {
+      context_folder: currentCharFolder || '',
+      context_name: currentChar || ''
+    });
     document.getElementById('dl-title').innerText = '📥 Đang Tải: ' + modObj.title;
     document.getElementById('dl-subtitle').innerText = 'Đang kết nối máy chủ tốc độ cao...';
     document.getElementById('dl-bar').style.width = '0%';
     document.getElementById('dl-pct').innerText = '0%';
     document.getElementById('dl-speed').innerText = 'Tốc độ: Đang tính toán...';
     document.getElementById('dl-modal').className = 'modal-overlay active';
-    pywebview.api.download_and_install(JSON.stringify(modObj));
+    pywebview.api.download_and_install(JSON.stringify(payload));
   }
 
   function showDownloadModal() {
@@ -2821,12 +2866,19 @@ HTML_TEMPLATE = """
   function finishDownloadSuccess(name, char) {
     document.getElementById('dl-bar').style.width = '100%';
     document.getElementById('dl-subtitle').innerText = '🎉 ĐÃ NẠP THÀNH CÔNG VÀO GAME!';
-    setTimeout(() => {
+    setTimeout(async () => {
       document.getElementById('dl-modal').className = 'modal-overlay';
+      await loadCharacters();
       switchView('installed');
-      currentCharFolder = '';
-      loadCharacters();
-      loadInstalled('');
+      if (char) {
+        const found = allCharactersData.characters.find(c => c.folder && c.folder.toLowerCase() === char.toLowerCase()) ||
+                      allCharactersData.categories.find(sc => sc.folder && sc.folder.toLowerCase() === char.toLowerCase());
+        if (found) {
+          selectItem(found);
+          return;
+        }
+      }
+      selectAllCharacters();
     }, 1000);
   }
 
