@@ -2315,9 +2315,9 @@ HTML_TEMPLATE = """
     <aside>
       <div class="sidebar-filter-wrap">
         <span class="sidebar-search-icon">🔍</span>
-        <input type="text" class="sidebar-search" id="char-search" placeholder="Tìm nhân vật..." oninput="filterCharacters(this.value)">
+        <input type="text" class="sidebar-search" id="sidebar-filter-input" placeholder="Tìm nhân vật..." oninput="filterSidebarList(this.value)">
       </div>
-      <div class="sidebar-scroll" id="sidebar-char-list">
+      <div class="sidebar-scroll" id="char-list">
         <!-- Characters Rendered via JS -->
       </div>
     </aside>
