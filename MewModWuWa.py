@@ -1946,7 +1946,7 @@ HTML_TEMPLATE = """
 
   /* RIGHT INSPECTOR PANEL */
   .inspector {
-    width: 370px;
+    width: 410px;
     background: var(--bg-surface);
     border-left: 1px solid var(--border-subtle);
     display: flex;
@@ -1968,8 +1968,8 @@ HTML_TEMPLATE = """
   }
   .cover-box {
     width: 100%;
-    height: 190px;
-    background: #08090f;
+    height: 360px;
+    background: #06070c;
     border-radius: var(--radius-md);
     overflow: hidden;
     position: relative;
@@ -1978,21 +1978,50 @@ HTML_TEMPLATE = """
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
   }
-  .cover-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.25s ease; }
-  .cover-box:hover .cover-img { transform: scale(1.03); }
-  .cover-zoom-hint {
+  .cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    transition: transform 0.25s ease;
+  }
+  .cover-box:hover .cover-img { transform: scale(1.02); }
+  .cover-actions-overlay {
     position: absolute;
-    bottom: 8px;
-    right: 8px;
-    background: rgba(10, 12, 18, 0.85);
+    bottom: 10px;
+    right: 10px;
+    display: flex;
+    gap: 6px;
+    z-index: 2;
+  }
+  .cover-action-btn {
+    background: rgba(10, 12, 18, 0.88);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border-medium);
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: var(--transition);
+  }
+  .cover-action-btn:hover {
+    background: rgba(0, 210, 255, 0.25);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .cover-zoom-hint {
+    background: rgba(10, 12, 18, 0.88);
     color: var(--accent);
     font-size: 10px;
     font-weight: 700;
-    padding: 3px 8px;
+    padding: 4px 10px;
     border-radius: var(--radius-full);
-    pointer-events: none;
     border: 1px solid var(--border-medium);
+    pointer-events: none;
     box-shadow: var(--shadow-sm);
   }
   .gallery-strip {
@@ -2351,7 +2380,10 @@ HTML_TEMPLATE = """
           <div class="cover-box" id="insp-cover-box" onclick="openInspectorFullPreview()" title="Bấm để xem ảnh phóng to toàn màn hình">
             <img src="" id="insp-cover-img" class="cover-img" style="display: none;">
             <div id="insp-no-cover" style="color: var(--text-muted); font-size: 11px;">Chưa có ảnh bìa (.MewMod_Cover.jpg)</div>
-            <div class="cover-zoom-hint" id="insp-zoom-hint" style="display: none;">🔍 Phóng To Ảnh</div>
+            <div class="cover-actions-overlay">
+              <button class="cover-action-btn" onclick="event.stopPropagation(); toggleCoverFit();" title="Chuyển chế độ Vừa Khung / Đầy Khung" id="btn-cover-fit">📐 Vừa Khung</button>
+              <div class="cover-zoom-hint" id="insp-zoom-hint" style="display: none;">🔍 Phóng To</div>
+            </div>
           </div>
 
           <!-- SCREENSHOTS GALLERY STRIP -->
@@ -2921,6 +2953,24 @@ HTML_TEMPLATE = """
 
   let activeInspectedImages = [];
   let currentInspectedImgIdx = 0;
+  let isCoverContain = false;
+
+  function toggleCoverFit() {
+    isCoverContain = !isCoverContain;
+    const img = document.getElementById('insp-cover-img');
+    const btn = document.getElementById('btn-cover-fit');
+    if (!img || !btn) return;
+    if (isCoverContain) {
+      img.style.objectFit = 'contain';
+      img.style.background = '#040508';
+      btn.innerText = '🖼️ Đầy Khung';
+    } else {
+      img.style.objectFit = 'cover';
+      img.style.objectPosition = 'top center';
+      img.style.background = 'transparent';
+      btn.innerText = '📐 Vừa Khung';
+    }
+  }
 
   async function inspectMod(fullPath, rowIdx = -1) {
     if (rowIdx >= 0) {
