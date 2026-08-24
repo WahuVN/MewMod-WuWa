@@ -1,18 +1,9 @@
 """
 =============================================================================
-🐾 MEWMOD WUWA v4.0 - PHIÊN BẢN TỐI THƯỢNG (FULL JASM & MODORA PRO)
+MEWMOD WUWA - WUTHERING WAVES MOD MANAGEMENT PLATFORM
 =============================================================================
-TÍCH HỢP ĐẦY ĐỦ 100% CÁC TÍNH NĂNG ĐỈNH CAO:
-1. [JASM PRO] Bảng Chi Tiết & Tùy Biến Mod (Right Inspector Panel):
-   - Xem & Đổi Ảnh Bìa Mod (Cover)
-   - Đổi Tên, Tác Giả, Ghi Chú Cá Nhân
-   - Bảng Quản Lý Phím Tắt Phụ Kiện `mod.ini` (Qunzi/Váy, Faxing/Tóc, Siwa/Tất, Xiezi/Giày...)
-   - Chỉnh sửa phím tắt & Lưu trực tiếp vào file `mod.ini`
-2. [JASM PRO] 2 Chế Độ Xem: Bảng Chi Tiết (Table View) & Lưới Ảnh (Grid View)
-3. [JASM PRO] Thao Tác Hàng Loạt: 'Tắt Hết Mod Nhân Vật', 'Bật Hết Mod', 'Lưu Preset Bộ Cài'
-4. [MODORA PRO] 4 Nguồn Mod Trực Tuyến: GameBanana, Huihui168, NexusMods, Universal Link
-5. [MODORA PRO] Tự Động Tải 1-Click Siêu Tốc (Cloudreve S3 & GameBanana CDN), Tự Giải Nén pass huihui
-6. [MODORA PRO] Unblur NSFW, Tự dịch tiếng Trung sang Tiếng Việt 100%
+Phát triển bởi WahuVN.
+Hệ thống quản lý, cấu hình, xử lý xung đột và tối ưu hóa bản mod cho Wuthering Waves.
 =============================================================================
 """
 
@@ -1463,7 +1454,7 @@ HTML_TEMPLATE = """
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="referrer" content="no-referrer">
-<title>MewMod WuWa - Siêu Ứng Dụng Quản Lý Mod Wuthering Waves</title>
+<title>MewMod WuWa - Trình Quản Lý & Cấu Hình Mod Wuthering Waves</title>
 <style>
   /* =========================================================================
      DESIGN SYSTEM TOKENS (ELITE PRODUCT UI/UX STANDARDS)
@@ -2450,12 +2441,12 @@ HTML_TEMPLATE = """
 
     <!-- ACTIONS -->
     <div class="header-actions">
-      <button class="btn" id="btn-update-badge" onclick="openUpdateModal()" style="display: none; background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: 700; box-shadow: 0 0 12px rgba(16, 185, 129, 0.4); animation: pulse 2s infinite;">🆕 Có Bản Mới <span id="lbl-new-ver"></span></button>
-      <button class="btn btn-secondary" onclick="checkAppUpdate(false)" title="Kiểm tra phiên bản mới từ GitHub">🔄 Cập Nhật</button>
-      <button class="btn btn-secondary" onclick="openFixerModal()">🔧 Sửa Lỗi Mod</button>
+      <button class="btn" id="btn-update-badge" onclick="openUpdateModal()" style="display: none; background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: 700; box-shadow: 0 0 12px rgba(16, 185, 129, 0.4); animation: pulse 2s infinite;">🆕 Bản Cập Nhật <span id="lbl-new-ver"></span></button>
+      <button class="btn btn-secondary" onclick="checkAppUpdate(false)" title="Kiểm tra phiên bản mới từ máy chủ">🔄 Kiểm Tra Cập Nhật</button>
+      <button class="btn btn-secondary" onclick="openFixerModal()">🔧 Vá Lỗi Mod</button>
       <button class="btn btn-secondary" onclick="pywebview.api.reload_wwmi_mods()">🔄 Nạp Lại (F10)</button>
       <button class="btn btn-secondary" onclick="pywebview.api.open_folder('')">📂 Thư Mục Mod</button>
-      <button class="btn btn-primary" onclick="pywebview.api.launch_game()">▶ Khởi Động Game (WWMI)</button>
+      <button class="btn btn-primary" onclick="pywebview.api.launch_game()">▶ Khởi Chạy Game (WWMI)</button>
     </div>
   </header>
 
@@ -2610,9 +2601,9 @@ HTML_TEMPLATE = """
   <div class="status-bar">
     <div class="status-left">
       <div class="status-dot"></div>
-      <div class="status-text" id="status-log-text">MewMod WuWa đã sẵn sàng.</div>
+      <div class="status-text" id="status-log-text">Hệ thống MewMod WuWa đã sẵn sàng.</div>
     </div>
-    <div>WWMI Engine: <span style="color: var(--accent); font-weight: 700;">Hoạt Động</span></div>
+    <div>Khung nạp WWMI: <span style="color: var(--accent); font-weight: 700;">Sẵn Sàng</span></div>
   </div>
 
   <!-- UPDATE MODAL -->
@@ -2622,7 +2613,7 @@ HTML_TEMPLATE = """
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-size: 24px;">🚀</span>
           <div>
-            <div style="font-size: 15px; font-weight: 800; color: var(--accent);" id="update-modal-title">CẬP NHẬT MEWMOD WUWA</div>
+            <div style="font-size: 15px; font-weight: 800; color: var(--accent);" id="update-modal-title">CẬP NHẬT PHIÊN BẢN MEWMOD WUWA</div>
             <div style="font-size: 11px; color: var(--text-muted);">Phiên bản hiện tại: <b id="lbl-cur-ver">v4.1.0</b></div>
           </div>
         </div>
@@ -2644,8 +2635,8 @@ HTML_TEMPLATE = """
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-size: 20px;">🔧</span>
           <div>
-            <div style="font-size: 15px; font-weight: 800; color: var(--accent);">BỘ CÔNG CỤ SỬA LỖI MOD WUWA (CFG 3.6.0)</div>
-            <div style="font-size: 11px; color: var(--text-muted);">Áp dụng quy tắc Vertex / Shader mới nhất từ Moonholder & MODORA</div>
+            <div style="font-size: 15px; font-weight: 800; color: var(--accent);">CÔNG CỤ VÁ LỖI & TỐI ƯU HÓA MOD (CONFIG 3.6.0)</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Chuẩn hóa cấu trúc Vertex Shader và liên kết Mesh theo phiên bản game hiện hành</div>
           </div>
         </div>
         <button class="btn btn-secondary" style="color: var(--danger);" onclick="closeFixerModal()">✕ Đóng</button>
@@ -2654,32 +2645,32 @@ HTML_TEMPLATE = """
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
         <div style="background: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px; display: flex; justify-content: space-between; align-items: center;">
           <div style="padding-right: 10px;">
-            <div style="font-size: 12px; font-weight: 700; color: #fab387;">🏷️ Thêm Hash Trạng Thái Mới (Derived Hashes)</div>
-            <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Bổ sung hash thiếu (LOD Bias, Cantarella ướt, Chisa E, Aemeath tụ lực...).</div>
+            <div style="font-size: 12px; font-weight: 700; color: #fab387;">🏷️ Cập Nhật Hash Dẫn Xuất (Derived Hashes)</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Bổ sung hash trạng thái phụ (LOD Bias, trạng thái ướt, chiêu thức kích hoạt...).</div>
           </div>
           <label class="switch"><input type="checkbox" id="fix-opt-derived" checked><span class="slider"></span></label>
         </div>
 
         <div style="background: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px; display: flex; justify-content: space-between; align-items: center;">
           <div style="padding-right: 10px;">
-            <div style="font-size: 12px; font-weight: 700; color: #89dceb;">🎨 Áp Dụng Texture Ổn Định (Stable Texture)</div>
-            <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Dùng RabbitFX ổn định texture chống nhấp nháy (Cantarella, Chisa...).</div>
+            <div style="font-size: 12px; font-weight: 700; color: #89dceb;">🎨 Ổn Định Bề Mặt Vân Phủ (Stable Texture)</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Kích hoạt thuật toán ổn định bề mặt, chống nhấp nháy vân phủ khi chuyển động.</div>
           </div>
           <label class="switch"><input type="checkbox" id="fix-opt-stable"><span class="slider"></span></label>
         </div>
 
         <div style="background: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px; display: flex; justify-content: space-between; align-items: center;">
           <div style="padding-right: 10px;">
-            <div style="font-size: 12px; font-weight: 700; color: #a6e3a1;">🕳️ Sửa Lỗ Hổng Mesh / Mất Bộ Phận</div>
-            <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Khắc phục thủng thân, mất chân tay, tàng hình sau update game.</div>
+            <div style="font-size: 12px; font-weight: 700; color: #a6e3a1;">🕳️ Khắc Phục Biến Dạng Mesh (Mesh Gap Fix)</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Tái lập cấu trúc polygon bị thiếu hoặc biến dạng sau các bản cập nhật trò chơi.</div>
           </div>
           <label class="switch"><input type="checkbox" id="fix-opt-mesh" checked><span class="slider"></span></label>
         </div>
 
         <div style="background: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px; display: flex; justify-content: space-between; align-items: center;">
           <div style="padding-right: 10px;">
-            <div style="font-size: 12px; font-weight: 700; color: #cba6f7;">🤖 Sửa Lỗi Cơ Khí Aemeath</div>
-            <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Tự động sửa lỗi model dạng cơ khí của Aemeath.</div>
+            <div style="font-size: 12px; font-weight: 700; color: #cba6f7;">🤖 Tối Ưu Hóa Model Aemeath</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Xử lý chuyên biệt trạng thái cơ khí và hiệu ứng hình thể của Aemeath.</div>
           </div>
           <label class="switch"><input type="checkbox" id="fix-opt-aemeath"><span class="slider"></span></label>
         </div>
@@ -2691,12 +2682,12 @@ HTML_TEMPLATE = """
       </div>
 
       <div style="height: 130px; background: #06070a; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 10px; font-family: monospace; font-size: 11px; color: #a6adc8; overflow-y: auto; margin-bottom: 16px;" id="fixer-console">
-        <div style="color: #6c7086;">[Hệ thống] Sẵn sàng thực thi lệnh sửa lỗi mod với cơ sở dữ liệu CFG 3.6.0...</div>
+        <div style="color: #6c7086;">[Hệ thống] Sẵn sàng thực thi quy trình chuẩn hóa và sửa lỗi bản mod...</div>
       </div>
 
       <div style="display: flex; justify-content: flex-end; gap: 10px;">
-        <button class="btn btn-danger" onclick="executeFixerAction(true)">🔄 Khôi Phục Bản Gốc (.BAK)</button>
-        <button class="btn btn-primary" onclick="executeFixerAction(false)">⚡ Bắt Đầu Sửa Lỗi Ngay (1-Click)</button>
+        <button class="btn btn-danger" onclick="executeFixerAction(true)">🔄 Khôi Phục Bản Sao Lưu (.BAK)</button>
+        <button class="btn btn-primary" onclick="executeFixerAction(false)">⚡ Bắt Đầu Quá Trình Sửa Lỗi</button>
       </div>
     </div>
   </div>
@@ -2710,7 +2701,7 @@ HTML_TEMPLATE = """
           <div style="font-size: 11px; color: var(--text-muted);" id="gal-author">Tác giả: ...</div>
         </div>
         <div style="display: flex; gap: 8px;">
-          <button class="btn btn-primary" onclick="downloadCurrentGalleryMod()">⚡ Tải 1-Click Ngay</button>
+          <button class="btn btn-primary" onclick="downloadCurrentGalleryMod()">⚡ Tải & Cài Đặt Mod</button>
           <button class="btn btn-secondary" style="color: var(--danger);" onclick="closeGalleryModal()">✕ Đóng</button>
         </div>
       </div>
