@@ -1245,10 +1245,24 @@ class MewModAPI:
         new_name = base_name if is_enable else f"DISABLED_{base_name}"
         new_path = os.path.join(parent_dir, new_name)
         try:
-            os.rename(full_path, new_path)
+            if is_enable:
+                # Cơ chế độc quyền: Khi BẬT một skin, tự động TẮT tất cả skin khác của cùng nhân vật để không bao giờ bị xung đột
+                char_folder_name = os.path.basename(parent_dir).lower()
+                if char_folder_name != "others":
+                    for other_item in os.listdir(parent_dir):
+                        full_other = os.path.join(parent_dir, other_item)
+                        if os.path.isdir(full_other) and not other_item.startswith("DISABLED_") and os.path.abspath(full_other) != os.path.abspath(full_path):
+                            dis_other_name = f"DISABLED_{other_item}"
+                            os.rename(full_other, os.path.join(parent_dir, dis_other_name))
+                            self.log(f"⏸️ Tự động TẮT skin khác để tránh xung đột: {other_item}")
+
+            if os.path.exists(full_path) and os.path.abspath(full_path) != os.path.abspath(new_path):
+                os.rename(full_path, new_path)
+                
             self.log(f"🔄 Đã {'BẬT' if is_enable else 'TẮT'} Mod: {base_name}")
             return {"success": True, "new_path": new_path}
         except Exception as e:
+            self.log(f"❌ Lỗi toggle_mod: {e}")
             return {"success": False, "error": str(e)}
 
     def delete_mod(self, full_path):
