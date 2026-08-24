@@ -1252,7 +1252,7 @@ class MewModAPI:
         else:
             if derived_hashes:
                 args.append("--derived-hashes")
-            if stable_texture:
+            elif stable_texture:
                 args.append("--stable-texture")
             if rendering33:
                 args.append("--rendering-33")
@@ -1300,9 +1300,12 @@ class MewModAPI:
                     if os.path.isdir(full_m):
                         self.log(f"🔧 Đang sửa: [{char_f.upper()}] {mod_f}...")
                         args = [WUWA_MOD_FIXER_EXE, "--cli", "--path", full_m, "--config", config_json]
-                        if derived_hashes: args.append("--derived-hashes")
-                        if stable_texture: args.append("--stable-texture")
-                        if rendering33: args.append("--rendering-33")
+                        if derived_hashes:
+                            args.append("--derived-hashes")
+                        elif stable_texture:
+                            args.append("--stable-texture")
+                        if rendering33:
+                            args.append("--rendering-33")
                         subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors='ignore')
                         count += 1
                         
