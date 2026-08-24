@@ -78,7 +78,7 @@ AVATARS_DIR = os.path.join(getattr(sys, '_MEIPASS', BASE_DIR), "avatars")
 if not os.path.exists(AVATARS_DIR):
     AVATARS_DIR = os.path.join(BASE_DIR, "avatars")
 APP_NAME = "MewMod WuWa"
-APP_VERSION = "4.1.0"
+APP_VERSION = "1.0.0"
 GITHUB_REPO = "WahuVN/MewMod-WuWa"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 
@@ -2424,7 +2424,7 @@ HTML_TEMPLATE = """
       <img class="brand-logo" src="{APP_LOGO_B64}" alt="Logo">
       <div class="brand-text">
         <div class="brand-title">
-          MEWMOD WUWA <span class="brand-badge">v4.1.0</span>
+          MEWMOD WUWA <span class="brand-badge">v1.0.0</span>
         </div>
         <div class="brand-sub">Trình Quản Lý & Cài Đặt Mod</div>
       </div>
@@ -2614,7 +2614,7 @@ HTML_TEMPLATE = """
           <span style="font-size: 24px;">🚀</span>
           <div>
             <div style="font-size: 15px; font-weight: 800; color: var(--accent);" id="update-modal-title">CẬP NHẬT PHIÊN BẢN MEWMOD WUWA</div>
-            <div style="font-size: 11px; color: var(--text-muted);">Phiên bản hiện tại: <b id="lbl-cur-ver">v4.1.0</b></div>
+            <div style="font-size: 11px; color: var(--text-muted);">Phiên bản hiện tại: <b id="lbl-cur-ver">v1.0.0</b></div>
           </div>
         </div>
         <button class="btn btn-secondary" style="color: var(--danger); padding: 4px 8px;" onclick="closeUpdateModal()">✕ Đóng</button>

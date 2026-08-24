@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/WahuVN/MewMod-WuWa/releases"><img src="https://img.shields.io/badge/Bản_mới_nhất-v4.1.0-brightgreen?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/WahuVN/MewMod-WuWa/releases"><img src="https://img.shields.io/badge/Bản_mới_nhất-v1.0.0-brightgreen?style=flat-square" alt="Version"></a>
   <img src="https://img.shields.io/badge/Hỗ_trợ-Windows_10%2F11-blue?style=flat-square" alt="Platform">
 </p>
 
@@ -32,7 +32,7 @@
 ## 🚀 Hướng dẫn sử dụng
 
 ### Dành cho người dùng thông thường (Khuyên dùng)
-1. Vào mục **[Releases](https://github.com/WahuVN/MewMod-WuWa/releases)** và tải file **`MewModWuWa-v4.1.0-Standalone.zip`**.
+1. Vào mục **[Releases](https://github.com/WahuVN/MewMod-WuWa/releases)** và tải file **`MewModWuWa-v1.0.0-Standalone.zip`**.
 2. Giải nén vào thư mục bất kỳ.
 3. Mở file **`MewModWuWa.exe`** để sử dụng ngay (không cần cài Python).
 
