@@ -38,7 +38,38 @@ BASE_DIR = r"D:\TOOL\WuWa Mod Skin"
 CACHE_DIR = os.path.join(BASE_DIR, ".cache", "thumbnails")
 os.makedirs(CACHE_DIR, exist_ok=True)
 
-WWMI_PATH = os.path.join(BASE_DIR, "WWMI")
+XXMI_CONFIG_PATH = os.path.join(
+    os.environ.get("APPDATA", ""),
+    "XXMI Launcher",
+    "XXMI Launcher Config.json",
+)
+
+
+def resolve_wwmi_path():
+    """Lấy đúng thư mục WWMI mà XXMI Launcher đang sử dụng."""
+    try:
+        with open(XXMI_CONFIG_PATH, "r", encoding="utf-8-sig") as config_file:
+            config = json.load(config_file)
+        configured_path = (
+            config.get("Importers", {})
+            .get("WWMI", {})
+            .get("Importer", {})
+            .get("importer_folder", "")
+        )
+        if configured_path:
+            configured_path = os.path.abspath(
+                os.path.expandvars(os.path.expanduser(configured_path))
+            )
+            if os.path.isdir(configured_path):
+                return configured_path
+    except (OSError, ValueError, TypeError):
+        pass
+
+    # Dự phòng cho bản portable hoặc máy chưa cài/cấu hình XXMI Launcher.
+    return os.path.join(BASE_DIR, "WWMI")
+
+
+WWMI_PATH = resolve_wwmi_path()
 WWMI_MODS_PATH = os.path.join(WWMI_PATH, "mods")
 WWMI_CHAR_PATH = os.path.join(WWMI_MODS_PATH, "character")
 os.makedirs(WWMI_CHAR_PATH, exist_ok=True)
@@ -447,12 +478,16 @@ def optimize_mod_structure(extracted_root, base_mod_name, fallback_folder="", on
             ext = os.path.splitext(f)[1].lower()
             if ext in ['.png', '.jpg', '.jpeg', '.webp'] and f.lower() != ".jasm_cover.jpg":
                 preview_images.append(os.path.join(root, f))
-            if ext == '.url':
+    # Đảm bảo luôn có tệp mod.ini chuẩn để WWMI/3DMigoto nạp 100%
+    if not os.path.exists(os.path.join(final_mod_dir, "mod.ini")):
+        for f in os.listdir(final_mod_dir):
+            if f.lower().endswith(".ini") and not f.lower().startswith("disabled_"):
                 try:
-                    os.remove(os.path.join(root, f))
+                    shutil.copy2(os.path.join(final_mod_dir, f), os.path.join(final_mod_dir, "mod.ini"))
+                    break
                 except:
                     pass
-                    
+
     cover_path = os.path.join(final_mod_dir, ".MewMod_Cover.jpg")
     if not os.path.exists(cover_path):
         if preview_images:
