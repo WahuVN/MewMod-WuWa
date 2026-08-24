@@ -386,11 +386,25 @@ SPECIAL_CATEGORIES = [
 ]
 
 
-GUID_MAPPING = {
-    "273777": "camellya", "282999": "aemeath", "282998": "carlotta",
-    "263888": "shorekeeper", "263999": "changli", "263777": "jinhsi",
-    "263666": "zhezhi", "263555": "xiangliyao", "263444": "yinlin"
-}
+def load_char_hashes():
+    char_hashes = {}
+    cfg_path = os.path.join(os.path.dirname(WUWA_MOD_FIXER_EXE), "config.json")
+    if os.path.exists(cfg_path):
+        try:
+            with open(cfg_path, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+            for c_name, c_data in cfg.get("characters", {}).items():
+                for mh in c_data.get("main_hashes", []):
+                    new_h = mh.get("new")
+                    if new_h:
+                        char_hashes[new_h.lower()] = c_name.lower()
+                    for old_h in mh.get("old", []):
+                        char_hashes[old_h.lower()] = c_name.lower()
+        except:
+            pass
+    return char_hashes
+
+CHAR_MAIN_HASHES = load_char_hashes()
 
 def clean_filename(name):
     name = re.sub(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}[_ -]*', '', name)
@@ -401,10 +415,22 @@ def clean_filename(name):
 
 def detect_character(text_hints, ini_content=""):
     combined = " ".join(text_hints).lower()
-    if ini_content:
-        for guid, char_id in GUID_MAPPING.items():
-            if guid in ini_content:
-                return char_id
+    
+    # 1. Nhận diện chính xác 100% qua Main Hash trong tệp INI
+    if ini_content and CHAR_MAIN_HASHES:
+        ini_lower = ini_content.lower()
+        for h, char_folder in CHAR_MAIN_HASHES.items():
+            if f"hash = {h}" in ini_lower or f"hash={h}" in ini_lower:
+                return char_folder
+
+    # 2. Nhận diện qua Từ điển Tên Nhân Vật (Trung - Anh)
+    for cn, en in DICT_NAMES:
+        if cn.lower() in combined or en.lower() in combined:
+            for item in CHARACTER_LIST:
+                if item["name"].lower() == en.lower() or item["folder"].lower() == en.lower():
+                    return item["folder"]
+
+    # 3. Nhận diện qua danh sách nhân vật
     for item in CHARACTER_LIST:
         f = item["folder"]
         if not f:
@@ -414,6 +440,8 @@ def detect_character(text_hints, ini_content=""):
         name_l = item.get("name", "").lower()
         if f.lower() in combined or (q and q in combined) or (q_cn and q_cn in combined) or (name_l and name_l in combined):
             return f
+            
+    # 4. Nhận diện qua danh mục đặc biệt (Phương tiện, Vũ khí, v.v.)
     for sc in SPECIAL_CATEGORIES:
         f = sc["folder"]
         hh_kw = sc.get("huihui_kw", "").lower()
@@ -421,6 +449,7 @@ def detect_character(text_hints, ini_content=""):
         name_l = sc.get("name", "").lower()
         if f.lower() in combined or (hh_kw and hh_kw in combined) or (gb_kw and gb_kw in combined) or (name_l and name_l in combined):
             return f
+            
     return "others"
 
 def extract_archive(archive_path, extract_dir, password="huihui"):
