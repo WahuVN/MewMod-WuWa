@@ -1,2 +1,3 @@
 @echo off
-start "" explorer "WWMI\mods\character"
+set "XXMI_CONFIG=%APPDATA%\XXMI Launcher\XXMI Launcher Config.json"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$fallback = Join-Path '%~dp0' 'WWMI\mods\character'; try { $config = Get-Content -Raw -LiteralPath $env:XXMI_CONFIG | ConvertFrom-Json; $wwmi = $config.Importers.WWMI.Importer.importer_folder; if ($wwmi -and (Test-Path -LiteralPath $wwmi)) { $target = Join-Path $wwmi 'mods\character' } else { $target = $fallback } } catch { $target = $fallback }; New-Item -ItemType Directory -Force -Path $target | Out-Null; Start-Process explorer.exe -ArgumentList ('"' + $target + '"')"

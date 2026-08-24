@@ -5,7 +5,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 print("=== BAT DAU DONG GOI BUILD BAN STANDALONE MEWMOD WUWA ===")
 
-BASE_DIR = r"d:\TOOL\WuWa Mod Skin"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 AVATARS_DIR = os.path.join(BASE_DIR, "avatars")
 TOOLS_DIR = os.path.join(BASE_DIR, "tools")
 ICON_ICO = os.path.join(BASE_DIR, "app_icon.ico")

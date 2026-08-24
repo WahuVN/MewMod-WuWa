@@ -77,28 +77,25 @@ os.makedirs(WWMI_CHAR_PATH, exist_ok=True)
 AVATARS_DIR = os.path.join(getattr(sys, '_MEIPASS', BASE_DIR), "avatars")
 if not os.path.exists(AVATARS_DIR):
     AVATARS_DIR = os.path.join(BASE_DIR, "avatars")
-os.makedirs(AVATARS_DIR, exist_ok=True)
+APP_NAME = "MewMod WuWa"
+APP_VERSION = "4.1.0"
+GITHUB_REPO = "WahuVN/MewMod-WuWa"
+GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 
-PRESETS_FILE = os.path.join(BASE_DIR, "mewmod_presets.json")
+TOOLS_DIR = os.path.join(getattr(sys, '_MEIPASS', BASE_DIR), "tools")
+if not os.path.exists(TOOLS_DIR):
+    TOOLS_DIR = os.path.join(BASE_DIR, "tools")
 
-JASM_DIR = os.path.join(BASE_DIR, "JASM")
-JASM_EXE = os.path.join(JASM_DIR, "JASM - Just Another Skin Manager.exe")
-if not os.path.exists(JASM_EXE):
-    JASM_EXE = r"C:\Users\ADMIN\AppData\Local\Programs\JASM\JASM - Just Another Skin Manager.exe"
+SEVEN_ZIP_PATH = os.path.join(TOOLS_DIR, "7z.exe")
+if not os.path.exists(SEVEN_ZIP_PATH):
+    SEVEN_ZIP_PATH = r"C:\Program Files\7-Zip\7z.exe"
 
-CHAR_IMG_DIR = os.path.join(JASM_DIR, "Assets", "Games", "WuWa", "Images", "Characters")
-if not os.path.exists(CHAR_IMG_DIR):
-    CHAR_IMG_DIR = r"C:\Users\ADMIN\AppData\Local\Programs\JASM\Assets\Games\WuWa\Images\Characters"
-
-MODORA_DIR = os.path.join(BASE_DIR, "MODORA", "MODORA-0.1.90-preview-win-x64")
-MODORA_EXE = os.path.join(MODORA_DIR, "MODORA Preview.exe")
-WUWA_MOD_FIXER_EXE = os.path.join(MODORA_DIR, "resources", "tools", "wuwa-mod-fixer", "v3.6.0", "Wuwa_Mod_Fixer_v3.6.0.exe")
+WUWA_MOD_FIXER_EXE = os.path.join(TOOLS_DIR, "wuwa-mod-fixer", "Wuwa_Mod_Fixer_v3.6.0.exe")
+if not os.path.exists(WUWA_MOD_FIXER_EXE):
+    WUWA_MOD_FIXER_EXE = os.path.join(BASE_DIR, "MODORA", "MODORA-0.1.90-preview-win-x64", "resources", "tools", "wuwa-mod-fixer", "v3.6.0", "Wuwa_Mod_Fixer_v3.6.0.exe")
 
 XXMI_EXE = r"C:\Users\ADMIN\AppData\Roaming\XXMI Launcher\Resources\Bin\XXMI Launcher.exe"
 DOWNLOADS_PATH = os.path.join(os.environ.get("USERPROFILE", ""), "Downloads")
-SEVEN_ZIP_PATH = os.path.join(JASM_DIR, "Assets", "7z", "7z.exe")
-if not os.path.exists(SEVEN_ZIP_PATH):
-    SEVEN_ZIP_PATH = r"C:\Program Files\7-Zip\7z.exe"
 
 
 SSL_CTX = ssl.create_default_context()
@@ -1355,21 +1352,6 @@ class MewModAPI:
         self.log(f"🎉 HOÀN TẤT! Đã sửa và tối ưu hóa {count} bản Mod cho phiên bản WuWa mới nhất.")
 
 
-    def launch_mod_fixer(self):
-        if os.path.exists(WUWA_MOD_FIXER_EXE):
-            subprocess.Popen([WUWA_MOD_FIXER_EXE], cwd=os.path.dirname(WUWA_MOD_FIXER_EXE))
-            self.log("🔧 Đã mở giao diện WuWa Mod Fixer v3.6.0!")
-        else:
-            self.log(f"⚠️ Không tìm thấy WuWa Mod Fixer tại: {WUWA_MOD_FIXER_EXE}")
-
-
-    def launch_modora(self):
-        if os.path.exists(MODORA_EXE):
-            subprocess.Popen([MODORA_EXE], cwd=MODORA_DIR)
-            self.log("🚀 Đã mở MODORA Preview!")
-        else:
-            self.log(f"⚠️ Không tìm thấy MODORA tại: {MODORA_EXE}")
-
     def launch_game(self):
         if os.path.exists(XXMI_EXE):
             subprocess.Popen([XXMI_EXE, "--nogui", "--xxmi", "WWMI"])
@@ -1377,13 +1359,71 @@ class MewModAPI:
         else:
             self.log("⚠️ Không tìm thấy XXMI Launcher.")
 
+    def check_app_update(self):
+        try:
+            req = urllib.request.Request(
+                GITHUB_API_URL,
+                headers={"User-Agent": "MewMod-WuWa", "Accept": "application/vnd.github.v3+json"}
+            )
+            try:
+                with urllib.request.urlopen(req, context=SSL_CTX, timeout=6) as r:
+                    data = json.loads(r.read().decode("utf-8"))
+            except urllib.error.HTTPError as http_err:
+                if http_err.code == 404:
+                    return {
+                        "success": True,
+                        "current_version": APP_VERSION,
+                        "latest_version": APP_VERSION,
+                        "has_update": False,
+                        "title": "MewMod WuWa",
+                        "changelog": "Bạn đang sử dụng phiên bản mới nhất!",
+                        "html_url": f"https://github.com/{GITHUB_REPO}",
+                        "direct_url": f"https://github.com/{GITHUB_REPO}"
+                    }
+                raise http_err
 
-    def launch_jasm(self):
-        if os.path.exists(JASM_EXE):
-            subprocess.Popen([JASM_EXE], cwd=os.path.dirname(JASM_EXE))
-            self.log("🎨 Đã mở JASM.")
-        else:
-            self.log("⚠️ Không tìm thấy JASM.")
+            latest_tag = data.get("tag_name", "").strip().lstrip("v")
+            cur_tag = APP_VERSION.strip().lstrip("v")
+            
+            def parse_ver(v):
+                return [int(x) for x in re.findall(r'\d+', v)] if v else [0]
+                
+            has_update = parse_ver(latest_tag) > parse_ver(cur_tag)
+            
+            assets = data.get("assets", [])
+            download_url = data.get("html_url", f"https://github.com/{GITHUB_REPO}/releases")
+            direct_url = ""
+            for a in assets:
+                aname = a.get("name", "").lower()
+                if aname.endswith(".exe") or aname.endswith(".zip"):
+                    direct_url = a.get("browser_download_url", "")
+                    break
+            
+            return {
+                "success": True,
+                "current_version": APP_VERSION,
+                "latest_version": latest_tag if latest_tag else APP_VERSION,
+                "has_update": has_update,
+                "title": data.get("name", f"Bản cập nhật v{latest_tag}"),
+                "changelog": data.get("body", "Không có ghi chú phiên bản."),
+                "html_url": download_url,
+                "direct_url": direct_url if direct_url else download_url
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "current_version": APP_VERSION,
+                "has_update": False,
+                "error": str(e)
+            }
+
+    def open_external_url(self, url):
+        try:
+            import webbrowser
+            webbrowser.open(url)
+            return {"success": True}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
 
 
 # =============================================================================
@@ -2366,7 +2406,7 @@ HTML_TEMPLATE = """
       <div class="brand-logo">🐾</div>
       <div class="brand-text">
         <div class="brand-title">
-          MEWMOD WUWA <span class="brand-badge">v4.0</span>
+          MEWMOD WUWA <span class="brand-badge">v4.1.0</span>
         </div>
         <div class="brand-sub">Trình Quản Lý & Cài Đặt Mod</div>
       </div>
@@ -2383,6 +2423,8 @@ HTML_TEMPLATE = """
 
     <!-- ACTIONS -->
     <div class="header-actions">
+      <button class="btn" id="btn-update-badge" onclick="openUpdateModal()" style="display: none; background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: 700; box-shadow: 0 0 12px rgba(16, 185, 129, 0.4); animation: pulse 2s infinite;">🆕 Có Bản Mới <span id="lbl-new-ver"></span></button>
+      <button class="btn btn-secondary" onclick="checkAppUpdate(false)" title="Kiểm tra phiên bản mới từ GitHub">🔄 Cập Nhật</button>
       <button class="btn btn-secondary" onclick="openFixerModal()">🔧 Sửa Lỗi Mod</button>
       <button class="btn btn-secondary" onclick="pywebview.api.reload_wwmi_mods()">🔄 Nạp Lại (F10)</button>
       <button class="btn btn-secondary" onclick="pywebview.api.open_folder('')">📂 Thư Mục Mod</button>
@@ -2546,6 +2588,28 @@ HTML_TEMPLATE = """
     <div>WWMI Engine: <span style="color: var(--accent); font-weight: 700;">Hoạt Động</span></div>
   </div>
 
+  <!-- UPDATE MODAL -->
+  <div class="modal-overlay" id="update-modal" style="display: none;">
+    <div class="modal-box" style="width: 540px; max-width: 95vw; padding: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 24px;">🚀</span>
+          <div>
+            <div style="font-size: 15px; font-weight: 800; color: var(--accent);" id="update-modal-title">CẬP NHẬT MEWMOD WUWA</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Phiên bản hiện tại: <b id="lbl-cur-ver">v4.1.0</b></div>
+          </div>
+        </div>
+        <button class="btn btn-secondary" style="color: var(--danger); padding: 4px 8px;" onclick="closeUpdateModal()">✕ Đóng</button>
+      </div>
+      <div id="update-modal-body" style="margin-bottom: 16px;">
+        <!-- Body content generated by JS -->
+      </div>
+      <div id="update-modal-footer" style="display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn-secondary" onclick="closeUpdateModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MOD FIXER MODAL -->
   <div class="modal-overlay" id="fixer-modal">
     <div class="modal-box" style="width: 860px; max-width: 95vw; padding: 24px;">
@@ -2557,10 +2621,7 @@ HTML_TEMPLATE = """
             <div style="font-size: 11px; color: var(--text-muted);">Áp dụng quy tắc Vertex / Shader mới nhất từ Moonholder & MODORA</div>
           </div>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn btn-secondary" onclick="pywebview.api.launch_mod_fixer()">Mở Công Cụ Gốc</button>
-          <button class="btn btn-secondary" style="color: var(--danger);" onclick="closeFixerModal()">✕ Đóng</button>
-        </div>
+        <button class="btn btn-secondary" style="color: var(--danger);" onclick="closeFixerModal()">✕ Đóng</button>
       </div>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
@@ -2670,10 +2731,81 @@ HTML_TEMPLATE = """
   let installedMods = [];
   let selectedModDetail = null;
   let currentStorePage = 1;
+  let latestUpdateInfo = null;
+
+  async function checkAppUpdate(isSilent = false) {
+    if (!isSilent) {
+      appendLog('[Cập Nhật] Đang kiểm tra phiên bản mới từ GitHub...');
+    }
+    try {
+      const res = await pywebview.api.check_app_update();
+      if (res && res.success) {
+        latestUpdateInfo = res;
+        const badge = document.getElementById('btn-update-badge');
+        const lbl = document.getElementById('lbl-new-ver');
+        if (res.has_update) {
+          if (badge && lbl) {
+            lbl.innerText = `v${res.latest_version}`;
+            badge.style.display = 'inline-flex';
+          }
+          appendLog(`[Cập Nhật] Đã có phiên bản mới v${res.latest_version}! Bấm nút 'Có Bản Mới' để tải.`);
+          if (!isSilent) {
+            openUpdateModal();
+          }
+        } else {
+          if (badge) badge.style.display = 'none';
+          if (!isSilent) {
+            alert(`Bạn đang sử dụng phiên bản mới nhất (v${res.current_version})!`);
+          }
+        }
+      } else {
+        if (!isSilent) {
+          alert('Không thể kết nối đến máy chủ GitHub để kiểm tra cập nhật. Vui lòng kiểm tra lại mạng.');
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function openUpdateModal() {
+    if (!latestUpdateInfo) return;
+    const body = document.getElementById('update-modal-body');
+    const footer = document.getElementById('update-modal-footer');
+    const title = document.getElementById('update-modal-title');
+    const curVer = document.getElementById('lbl-cur-ver');
+    
+    if (curVer) curVer.innerText = `v${latestUpdateInfo.current_version}`;
+    if (title) title.innerText = latestUpdateInfo.has_update ? `CÓ BẢN CẬP NHẬT MỚI: v${latestUpdateInfo.latest_version}` : `MEWMOD WUWA v${latestUpdateInfo.current_version}`;
+    
+    if (body) {
+      body.innerHTML = `
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px;">
+          <div style="font-weight: 700; color: #10b981; font-size: 14px; margin-bottom: 8px;">${latestUpdateInfo.title || 'Bản Cập Nhật Mới'}</div>
+          <div style="font-size: 12px; color: var(--text-secondary); white-space: pre-wrap; max-height: 220px; overflow-y: auto; line-height: 1.6; font-family: var(--font-mono);">${latestUpdateInfo.changelog || 'Tối ưu hóa hệ thống và sửa lỗi.'}</div>
+        </div>
+      `;
+    }
+    
+    if (footer) {
+      footer.innerHTML = `
+        <button class="btn btn-secondary" onclick="closeUpdateModal()">Đóng</button>
+        <button class="btn btn-secondary" onclick="pywebview.api.open_external_url('${latestUpdateInfo.html_url}')">🌐 Xem Release GitHub</button>
+        <button class="btn btn-primary" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="pywebview.api.open_external_url('${latestUpdateInfo.direct_url}')">⬇️ Tải Cập Nhật Ngay</button>
+      `;
+    }
+    
+    document.getElementById('update-modal').style.display = 'flex';
+  }
+
+  function closeUpdateModal() {
+    document.getElementById('update-modal').style.display = 'none';
+  }
 
   window.addEventListener('pywebviewready', async () => {
     await loadCharacters();
     loadMods(1);
+    checkAppUpdate(true); // Kiểm tra tự động trong nền
   });
 
   window.appendLog = function(msg) {
@@ -3455,7 +3587,7 @@ HTML_TEMPLATE = """
 def main():
     api = MewModAPI()
     window = webview.create_window(
-        title="🐾 MewMod WuWa v4.0 - Trình Quản Lý & Cài Đặt Mod Skin",
+        title=f"🐾 {APP_NAME} v{APP_VERSION} - Trình Quản Lý & Cài Đặt Mod Skin",
         html=HTML_TEMPLATE,
         js_api=api,
         width=1320,

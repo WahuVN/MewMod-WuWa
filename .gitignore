@@ -20,3 +20,10 @@ JASM/
 logs/
 .system_generated/
 scratch/
+build/
+dist/
+*.spec
+test_*.webp
+test_*.png
+test_*.jpg
+test_*.py
