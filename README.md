@@ -1,6 +1,7 @@
 # 🐾 MEWMOD WUWA - Ultimate Wuthering Waves Mod Manager
 
 <p align="center">
+  <img src="./app_icon.png" width="140" height="140" alt="MewMod WuWa Logo" style="border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);"><br><br>
   <img src="https://img.shields.io/badge/Wuthering_Waves-Mod_Manager-ff79c6?style=for-the-badge&logo=unrealengine" alt="WuWa">
   <img src="https://img.shields.io/badge/Version-v4.1.0_Ultimate-8be9fd?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/Engine-WebView2_120FPS-50fa7b?style=for-the-badge" alt="Engine">

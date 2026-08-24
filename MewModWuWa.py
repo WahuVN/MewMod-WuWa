@@ -1427,7 +1427,24 @@ class MewModAPI:
 
 
 # =============================================================================
-# HTML / CSS / JS GIAO DIỆN JASM + MODORA CHUẨN ĐỈNH CAO
+# LOGO BIỂU TƯỢNG ỨNG DỤNG (BASE64)
+# =============================================================================
+LOGO_FILE = os.path.join(getattr(sys, '_MEIPASS', BASE_DIR), "logo.png")
+if not os.path.exists(LOGO_FILE):
+    LOGO_FILE = os.path.join(BASE_DIR, "logo.png")
+
+if os.path.exists(LOGO_FILE):
+    try:
+        with open(LOGO_FILE, "rb") as f:
+            APP_LOGO_B64 = "data:image/png;base64," + base64.b64encode(f.read()).decode("utf-8")
+    except:
+        APP_LOGO_B64 = ""
+else:
+    APP_LOGO_B64 = ""
+
+
+# =============================================================================
+# HTML / CSS / JS GIAO DIỆN CHUẨN ĐỈNH CAO
 # =============================================================================
 
 HTML_TEMPLATE = """
@@ -1528,15 +1545,16 @@ HTML_TEMPLATE = """
     cursor: default;
   }
   .brand-logo {
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, #00d2ff, #a855f7);
+    width: 38px;
+    height: 38px;
     border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    box-shadow: 0 2px 10px rgba(0, 210, 255, 0.3);
+    object-fit: cover;
+    border: 1.5px solid var(--border-subtle);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .brand-logo:hover {
+    transform: scale(1.12);
   }
   .brand-text { display: flex; flex-direction: column; }
   .brand-title {
@@ -2403,7 +2421,7 @@ HTML_TEMPLATE = """
   <!-- HEADER -->
   <header>
     <div class="brand">
-      <div class="brand-logo">🐾</div>
+      <img class="brand-logo" src="{APP_LOGO_B64}" alt="Logo">
       <div class="brand-text">
         <div class="brand-title">
           MEWMOD WUWA <span class="brand-badge">v4.1.0</span>
@@ -3588,7 +3606,7 @@ def main():
     api = MewModAPI()
     window = webview.create_window(
         title=f"🐾 {APP_NAME} v{APP_VERSION} - Trình Quản Lý & Cài Đặt Mod Skin",
-        html=HTML_TEMPLATE,
+        html=HTML_TEMPLATE.replace("{APP_LOGO_B64}", APP_LOGO_B64),
         js_api=api,
         width=1320,
         height=880,

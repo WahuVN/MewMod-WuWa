@@ -10,13 +10,13 @@ AVATARS_DIR = os.path.join(BASE_DIR, "avatars")
 TOOLS_DIR = os.path.join(BASE_DIR, "tools")
 ICON_ICO = os.path.join(BASE_DIR, "app_icon.ico")
 
-# 1. Create .ico icon
-all_png = os.path.join(AVATARS_DIR, "All.png")
-if os.path.exists(all_png):
+# 1. Create .ico icon from app_icon.png
+app_png = os.path.join(BASE_DIR, "app_icon.png")
+if os.path.exists(app_png):
     try:
-        im = Image.open(all_png)
-        im.save(ICON_ICO, format='ICO', sizes=[(256, 256), (128, 128), (64, 64), (32, 32), (16, 16)])
-        print(f"✅ Da tao Icon: {ICON_ICO}")
+        im = Image.open(app_png).convert('RGBA')
+        im.save(ICON_ICO, format='ICO', sizes=[(256, 256), (128, 128), (64, 64), (48, 48), (32, 32), (16, 16)])
+        print(f"✅ Da tao Icon tu app_icon.png: {ICON_ICO}")
     except Exception as e:
         print(f"⚠️ Khong the tao ico: {e}")
 
@@ -29,6 +29,13 @@ cmd = [
     "--name", "MewModWuWa",
     "--add-data", f"{AVATARS_DIR};avatars",
 ]
+
+logo_png = os.path.join(BASE_DIR, "logo.png")
+if os.path.exists(logo_png):
+    cmd.extend(["--add-data", f"{logo_png};."])
+
+if os.path.exists(app_png):
+    cmd.extend(["--add-data", f"{app_png};."])
 
 if os.path.exists(TOOLS_DIR):
     cmd.extend(["--add-data", f"{TOOLS_DIR};tools"])
