@@ -33,8 +33,12 @@ from pathlib import Path
 from PIL import Image, ImageOps, ImageDraw
 import webview
 
-# ĐƯỜNG DẪN HỆ THỐNG GOM TẬP TRUNG
-BASE_DIR = r"D:\TOOL\WuWa Mod Skin"
+# ĐƯỜNG DẪN HỆ THỐNG GOM TẬP TRUNG TỰ ĐỘNG NHẬN DIỆN
+if getattr(sys, 'frozen', False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__)) if '__file__' in globals() else r"D:\TOOL\WuWa Mod Skin"
+
 CACHE_DIR = os.path.join(BASE_DIR, ".cache", "thumbnails")
 os.makedirs(CACHE_DIR, exist_ok=True)
 
@@ -46,7 +50,7 @@ XXMI_CONFIG_PATH = os.path.join(
 
 
 def resolve_wwmi_path():
-    """Lấy đúng thư mục WWMI mà XXMI Launcher đang sử dụng."""
+    """Lấy đúng thư mục WWMI mà XXMI Launcher đang sử dụng hoặc các thư mục chuẩn."""
     try:
         with open(XXMI_CONFIG_PATH, "r", encoding="utf-8-sig") as config_file:
             config = json.load(config_file)
@@ -65,13 +69,18 @@ def resolve_wwmi_path():
     except (OSError, ValueError, TypeError):
         pass
 
-    # Dự phòng cho bản portable hoặc máy chưa cài/cấu hình XXMI Launcher.
+    # Quét các đường dẫn cài đặt game & WWMI thông dụng
+    for cand in [r"D:\Game\WWMI", r"D:\Wuwa\WWMI", r"C:\Game\WWMI", r"C:\Wuwa\WWMI", os.path.join(BASE_DIR, "WWMI")]:
+        if os.path.isdir(cand):
+            return cand
+
+    # Dự phòng
     return os.path.join(BASE_DIR, "WWMI")
 
 
 WWMI_PATH = resolve_wwmi_path()
-WWMI_MODS_PATH = os.path.join(WWMI_PATH, "mods")
-WWMI_CHAR_PATH = os.path.join(WWMI_MODS_PATH, "character")
+WWMI_MODS_PATH = os.path.join(WWMI_PATH, "Mods") if os.path.exists(os.path.join(WWMI_PATH, "Mods")) else os.path.join(WWMI_PATH, "mods")
+WWMI_CHAR_PATH = os.path.join(WWMI_MODS_PATH, "Character") if os.path.exists(os.path.join(WWMI_MODS_PATH, "Character")) else os.path.join(WWMI_MODS_PATH, "character")
 os.makedirs(WWMI_CHAR_PATH, exist_ok=True)
 
 AVATARS_DIR = os.path.join(getattr(sys, '_MEIPASS', BASE_DIR), "avatars")
@@ -94,7 +103,7 @@ WUWA_MOD_FIXER_EXE = os.path.join(TOOLS_DIR, "wuwa-mod-fixer", "Wuwa_Mod_Fixer_v
 if not os.path.exists(WUWA_MOD_FIXER_EXE):
     WUWA_MOD_FIXER_EXE = os.path.join(BASE_DIR, "MODORA", "MODORA-0.1.90-preview-win-x64", "resources", "tools", "wuwa-mod-fixer", "v3.6.0", "Wuwa_Mod_Fixer_v3.6.0.exe")
 
-XXMI_EXE = r"C:\Users\ADMIN\AppData\Roaming\XXMI Launcher\Resources\Bin\XXMI Launcher.exe"
+XXMI_EXE = os.path.join(os.environ.get("APPDATA", ""), "XXMI Launcher", "Resources", "Bin", "XXMI Launcher.exe")
 DOWNLOADS_PATH = os.path.join(os.environ.get("USERPROFILE", ""), "Downloads")
 
 
@@ -2766,10 +2775,8 @@ HTML_TEMPLATE = """
             lbl.innerText = `v${res.latest_version}`;
             badge.style.display = 'inline-flex';
           }
-          appendLog(`[Cập Nhật] Đã có phiên bản mới v${res.latest_version}! Bấm nút 'Có Bản Mới' để tải.`);
-          if (!isSilent) {
-            openUpdateModal();
-          }
+          appendLog(`[Cập Nhật] Đã có phiên bản mới v${res.latest_version}!`);
+          openUpdateModal(); // Tự động mở cửa sổ cập nhật ngay khi mở app!
         } else {
           if (badge) badge.style.display = 'none';
           if (!isSilent) {
