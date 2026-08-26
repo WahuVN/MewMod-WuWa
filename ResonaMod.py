@@ -1466,34 +1466,63 @@ class ResonaModAPI:
                 is_dis = m.startswith("DISABLED_")
                 clean_n = m.replace("DISABLED_", "")
                 if is_enable and is_dis:
-                    os.rename(full_m, os.path.join(char_p, clean_n))
+                    target_p = os.path.join(char_p, clean_n)
+                    if os.path.exists(target_p) and os.path.abspath(target_p) != os.path.abspath(full_m):
+                        shutil.rmtree(target_p, ignore_errors=True)
+                    os.rename(full_m, target_p)
                     count += 1
                 elif not is_enable and not is_dis:
-                    os.rename(full_m, os.path.join(char_p, f"DISABLED_{clean_n}"))
+                    dis_p = os.path.join(char_p, f"DISABLED_{clean_n}")
+                    if os.path.exists(dis_p) and os.path.abspath(dis_p) != os.path.abspath(full_m):
+                        shutil.rmtree(dis_p, ignore_errors=True)
+                    os.rename(full_m, dis_p)
                     count += 1
         self.log(f"⚡ Đã {'BẬT' if is_enable else 'TẮT'} toàn bộ mod cho nhân vật: {char_folder.upper()}")
         return {"success": True, "count": count}
 
     def toggle_mod(self, full_path, is_enable):
+        if not full_path:
+            return {"success": False, "error": "Đường dẫn mod trống"}
+        
+        full_path = os.path.abspath(os.path.normpath(full_path.replace("/", os.sep)))
         parent_dir = os.path.dirname(full_path)
         base_name = os.path.basename(full_path).replace("DISABLED_", "")
         new_name = base_name if is_enable else f"DISABLED_{base_name}"
         new_path = os.path.join(parent_dir, new_name)
+
+        if not os.path.exists(full_path):
+            alt_path = os.path.join(parent_dir, base_name if not is_enable else f"DISABLED_{base_name}")
+            if os.path.exists(alt_path):
+                full_path = alt_path
+
+        if not os.path.exists(full_path):
+            return {"success": False, "error": f"Không tìm thấy thư mục: {full_path}"}
+
         try:
             if is_enable:
-                # Cơ chế độc quyền: Khi BẬT một skin, tự động TẮT tất cả skin khác của cùng nhân vật để không bao giờ bị xung đột
+                # Cơ chế Smart Anti-Conflict: Khi BẬT một skin, tự động TẮT các skin khác của cùng nhân vật
                 char_folder_name = os.path.basename(parent_dir).lower()
-                if char_folder_name != "others":
+                if char_folder_name != "others" and os.path.exists(parent_dir):
                     for other_item in os.listdir(parent_dir):
                         full_other = os.path.join(parent_dir, other_item)
-                        if os.path.isdir(full_other) and not other_item.startswith("DISABLED_") and os.path.abspath(full_other) != os.path.abspath(full_path):
-                            dis_other_name = f"DISABLED_{other_item}"
-                            os.rename(full_other, os.path.join(parent_dir, dis_other_name))
-                            self.log(f"⏸️ Tự động TẮT skin khác để tránh xung đột: {other_item}")
+                        if os.path.isdir(full_other) and not other_item.startswith("DISABLED_"):
+                            if os.path.abspath(full_other) != os.path.abspath(full_path) and os.path.abspath(full_other) != os.path.abspath(new_path):
+                                clean_other = other_item.replace("DISABLED_", "")
+                                dis_other_name = f"DISABLED_{clean_other}"
+                                dis_other_path = os.path.join(parent_dir, dis_other_name)
+                                if os.path.exists(dis_other_path) and os.path.abspath(dis_other_path) != os.path.abspath(full_other):
+                                    shutil.rmtree(dis_other_path, ignore_errors=True)
+                                try:
+                                    os.rename(full_other, dis_other_path)
+                                    self.log(f"⏸️ Tự động TẮT skin khác để tránh xung đột: {clean_other}")
+                                except Exception as e_dis:
+                                    pass
 
             if os.path.exists(full_path) and os.path.abspath(full_path) != os.path.abspath(new_path):
+                if os.path.exists(new_path):
+                    shutil.rmtree(new_path, ignore_errors=True)
                 os.rename(full_path, new_path)
-                
+
             self.log(f"🔄 Đã {'BẬT' if is_enable else 'TẮT'} Mod: {base_name}")
             return {"success": True, "new_path": new_path}
         except Exception as e:
@@ -1502,6 +1531,7 @@ class ResonaModAPI:
 
     def delete_mod(self, full_path):
         try:
+            full_path = os.path.abspath(os.path.normpath(full_path.replace("/", os.sep)))
             if os.path.exists(full_path):
                 if os.path.isdir(full_path):
                     shutil.rmtree(full_path, ignore_errors=True)
@@ -4547,7 +4577,9 @@ HTML_TEMPLATE = """
   }
 
   /* INSTALLED MANAGER */
-  async function loadInstalled(filterFolder = '') {
+  let currentInspectedModPath = '';
+
+  async function loadInstalled(filterFolder = '', targetSelectPath = '') {
     const tbody = document.getElementById('installed-tbody');
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">⏳ Đang đọc danh sách Mod đã cài...</td></tr>';
@@ -4593,9 +4625,24 @@ HTML_TEMPLATE = """
     const countEl = document.getElementById('context-mod-count');
     if (countEl) countEl.innerText = `${installedMods.length} Bản Mod Đã Cài`;
     tbody.innerHTML = '';
+
+    let selectIdx = 0;
+    const matchPath = targetSelectPath || currentInspectedModPath;
+    if (matchPath) {
+      const cleanMatch = matchPath.replace(/\\/g, '/').toLowerCase();
+      const baseClean = cleanMatch.split('/').pop().replace('disabled_', '');
+      const fIdx = installedMods.findIndex(m => {
+        const mPath = m.full_path.replace(/\\/g, '/').toLowerCase();
+        return mPath === cleanMatch || mPath.endsWith('/' + baseClean) || mPath.endsWith('/disabled_' + baseClean);
+      });
+      if (fIdx >= 0) selectIdx = fIdx;
+    }
+
     installedMods.forEach((m, idx) => {
       const tr = document.createElement('tr');
       tr.id = `mod-row-${idx}`;
+      if (idx === selectIdx) tr.className = 'selected';
+
       tr.onclick = (e) => {
         if (e.target.type !== 'checkbox' && !e.target.classList.contains('slider')) {
           inspectMod(m.full_path, idx);
@@ -4606,7 +4653,7 @@ HTML_TEMPLATE = """
       tr.innerHTML = `
         <td style="text-align: center;">
           <label class="switch">
-            <input type="checkbox" ${isEn ? 'checked' : ''} onchange="toggleMod('${m.full_path.replace(/\\\\/g, '\\\\\\\\')}', this.checked, ${idx})">
+            <input type="checkbox" class="mod-switch-input" ${isEn ? 'checked' : ''}>
             <span class="slider"></span>
           </label>
         </td>
@@ -4628,23 +4675,51 @@ HTML_TEMPLATE = """
           </span>
         </td>
         <td style="text-align: right;">
-          <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 11px; margin-right: 4px;" onclick="event.stopPropagation(); inspectMod('${m.full_path.replace(/\\\\/g, '\\\\\\\\')}', ${idx})">Chi Tiết</button>
-          <button class="btn btn-secondary" style="height: 24px; padding: 0 6px; font-size: 11px; color: #f87171;" title="Xóa bản mod này" onclick="event.stopPropagation(); deleteInstalledModDirect('${m.full_path.replace(/\\\\/g, '\\\\\\\\')}')">
+          <button class="btn btn-secondary btn-detail" style="height: 24px; padding: 0 8px; font-size: 11px; margin-right: 4px;">Chi Tiết</button>
+          <button class="btn btn-secondary btn-del" style="height: 24px; padding: 0 6px; font-size: 11px; color: #f87171;" title="Xóa bản mod này">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
         </td>
       `;
+
+      const chk = tr.querySelector('.mod-switch-input');
+      if (chk) {
+        chk.onchange = (e) => {
+          e.stopPropagation();
+          toggleMod(m.full_path, e.target.checked);
+        };
+      }
+
+      const btnDetail = tr.querySelector('.btn-detail');
+      if (btnDetail) {
+        btnDetail.onclick = (e) => {
+          e.stopPropagation();
+          inspectMod(m.full_path, idx);
+        };
+      }
+
+      const btnDel = tr.querySelector('.btn-del');
+      if (btnDel) {
+        btnDel.onclick = (e) => {
+          e.stopPropagation();
+          deleteInstalledModDirect(m.full_path);
+        };
+      }
+
       tbody.appendChild(tr);
     });
 
-    if (installedMods.length > 0) {
-      inspectMod(installedMods[0].full_path, 0);
+    if (installedMods.length > 0 && selectIdx < installedMods.length) {
+      inspectMod(installedMods[selectIdx].full_path, selectIdx);
     }
   }
 
-  async function toggleMod(fullPath, isEnable, rowIdx) {
-    await window.pywebview.api.toggle_mod(fullPath, isEnable);
-    loadInstalled(currentCharFolder);
+  async function toggleMod(fullPath, isEnable) {
+    currentInspectedModPath = fullPath;
+    const res = await window.pywebview.api.toggle_mod(fullPath, isEnable);
+    const nextPath = (res && res.new_path) ? res.new_path : fullPath;
+    currentInspectedModPath = nextPath;
+    await loadInstalled(currentCharFolder, nextPath);
     loadCharacters();
   }
 
@@ -4654,7 +4729,8 @@ HTML_TEMPLATE = """
       return;
     }
     await window.pywebview.api.toggle_all_mods_for_char(currentCharFolder, isEnable);
-    loadInstalled(currentCharFolder);
+    await loadInstalled(currentCharFolder);
+    loadCharacters();
   }
 
   let activeInspectedImages = [];
@@ -4679,6 +4755,7 @@ HTML_TEMPLATE = """
   }
 
   async function inspectMod(fullPath, rowIdx = -1) {
+    currentInspectedModPath = fullPath;
     if (rowIdx >= 0) {
       document.querySelectorAll('#installed-tbody tr').forEach(r => r.className = '');
       const selectedRow = document.getElementById(`mod-row-${rowIdx}`);
