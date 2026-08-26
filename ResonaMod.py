@@ -577,9 +577,12 @@ def load_char_hashes():
 CHAR_MAIN_HASHES = load_char_hashes()
 
 def clean_filename(name):
+    # Dịch tiêu đề từ tiếng Trung / tên mod sang tiếng Việt nếu có
+    name = translate_mod_title(name)
     name = re.sub(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}[_ -]*', '', name)
     name = re.sub(r'\.(zip|rar|7z|tar|gz)$', '', name, flags=re.IGNORECASE)
     name = re.sub(r'[【\[\(][^】\]\)]*[】\]\)]', '', name)
+    name = re.sub(r'[\\/:*?"<>|]', '_', name)
     name = name.strip(' _-.')
     return name if name else f"Mod_{int(time.time())}"
 
@@ -664,7 +667,8 @@ def optimize_mod_structure(extracted_root, base_mod_name, fallback_folder="", on
     char_dest_path = os.path.join(WWMI_CHAR_PATH, char_folder_name)
     os.makedirs(char_dest_path, exist_ok=True)
     
-    clean_name = clean_filename(base_mod_name)
+    target_name = desc if (desc and desc != "Mod" and not desc.endswith(".zip")) else base_mod_name
+    clean_name = clean_filename(target_name)
     final_mod_dir = os.path.join(char_dest_path, clean_name)
     if os.path.exists(final_mod_dir):
         final_mod_dir = f"{final_mod_dir}_{int(time.time()) % 10000}"
@@ -1340,6 +1344,7 @@ class ResonaModAPI:
                         })
             except Exception:
                 pass
+        items.sort(key=lambda x: (x.get("char_folder", "").lower(), x.get("clean_name", "").lower()))
         return items
 
     def get_mod_detail(self, full_path):
@@ -4622,10 +4627,15 @@ HTML_TEMPLATE = """
   /* INSTALLED MANAGER */
   let currentInspectedModPath = '';
 
-  async function loadInstalled(filterFolder = '', targetSelectPath = '') {
+  async function loadInstalled(filterFolder = '', targetSelectPath = '', isSilent = false) {
     const tbody = document.getElementById('installed-tbody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">⏳ Đang đọc danh sách Mod đã cài...</td></tr>';
+    const scrollWrap = document.getElementById('installed-view') || document.querySelector('.main-content');
+    const prevScrollTop = scrollWrap ? scrollWrap.scrollTop : 0;
+
+    if (!isSilent) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">⏳ Đang đọc danh sách Mod đã cài...</td></tr>';
+    }
     
     try {
       await ensureApiReady();
@@ -4755,6 +4765,10 @@ HTML_TEMPLATE = """
     if (installedMods.length > 0 && selectIdx < installedMods.length) {
       inspectMod(installedMods[selectIdx].full_path, selectIdx);
     }
+
+    if (scrollWrap && prevScrollTop > 0) {
+      scrollWrap.scrollTop = prevScrollTop;
+    }
   }
 
   async function toggleMod(fullPath, isEnable) {
@@ -4762,7 +4776,7 @@ HTML_TEMPLATE = """
     const res = await window.pywebview.api.toggle_mod(fullPath, isEnable);
     const nextPath = (res && res.new_path) ? res.new_path : fullPath;
     currentInspectedModPath = nextPath;
-    await loadInstalled(currentCharFolder, nextPath);
+    await loadInstalled(currentCharFolder, nextPath, true);
     loadCharacters();
   }
 
