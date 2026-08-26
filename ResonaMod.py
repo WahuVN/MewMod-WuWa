@@ -4672,10 +4672,10 @@ HTML_TEMPLATE = """
     let selectIdx = 0;
     const matchPath = targetSelectPath || currentInspectedModPath;
     if (matchPath) {
-      const cleanMatch = matchPath.replace(/\\/g, '/').toLowerCase();
+      const cleanMatch = matchPath.split(String.fromCharCode(92)).join('/').toLowerCase();
       const baseClean = cleanMatch.split('/').pop().replace('disabled_', '');
       const fIdx = installedMods.findIndex(m => {
-        const mPath = m.full_path.replace(/\\/g, '/').toLowerCase();
+        const mPath = m.full_path.split(String.fromCharCode(92)).join('/').toLowerCase();
         return mPath === cleanMatch || mPath.endsWith('/' + baseClean) || mPath.endsWith('/disabled_' + baseClean);
       });
       if (fIdx >= 0) selectIdx = fIdx;
@@ -4979,7 +4979,7 @@ HTML_TEMPLATE = """
   }
 
   function deleteInstalledModDirect(fullPath, modName = '') {
-    const name = modName || fullPath.replace(/\\/g, '/').split('/').pop().replace('DISABLED_', '');
+    const name = modName || fullPath.split(String.fromCharCode(92)).join('/').split('/').pop().replace('DISABLED_', '');
     confirmDeleteMod(fullPath, name);
   }
 
