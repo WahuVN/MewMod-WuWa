@@ -5338,7 +5338,7 @@ def launch_edge_app(url, width=1320, height=880):
             app_exe = p
             break
 
-    profile_dir = os.path.join(os.environ.get("TEMP", os.path.expanduser("~")), "ResonaMod_App_Profile")
+    profile_dir = os.path.join(tempfile.gettempdir(), f"ResonaMod_Profile_{os.getpid()}")
     os.makedirs(profile_dir, exist_ok=True)
 
     if app_exe:
@@ -5350,9 +5350,14 @@ def launch_edge_app(url, width=1320, height=880):
             "--no-first-run",
             "--no-default-browser-check",
             "--disable-background-mode",
-            "--disable-extensions"
+            "--disable-extensions",
+            "--disable-features=Translate,OptimizationHints"
         ]
-        return subprocess.Popen(cmd)
+        try:
+            return subprocess.Popen(cmd)
+        except Exception:
+            webbrowser.open(url)
+            return None
     else:
         webbrowser.open(url)
         return None
@@ -5383,18 +5388,25 @@ def main():
     try:
         while True:
             time.sleep(1)
-            # Nếu tiến trình Edge còn đang chạy trực tiếp, giữ nguyên server
+            # Nếu tiến trình Edge còn đang chạy trực tiếp, tiếp tục giữ server
             if proc and proc.poll() is None:
                 continue
             
             if APP_STARTED:
-                if time.time() - LAST_HEARTBEAT > 120 or LAST_HEARTBEAT == 0:
+                if LAST_HEARTBEAT == 0 or time.time() - LAST_HEARTBEAT > 180:
                     break
             else:
-                if time.time() - start_time > 45:
+                if time.time() - start_time > 60:
                     break
     except KeyboardInterrupt:
         pass
+    finally:
+        try:
+            pdir = os.path.join(tempfile.gettempdir(), f"ResonaMod_Profile_{os.getpid()}")
+            if os.path.exists(pdir):
+                shutil.rmtree(pdir, ignore_errors=True)
+        except:
+            pass
 
 
 if __name__ == "__main__":
