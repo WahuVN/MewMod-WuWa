@@ -1429,11 +1429,26 @@ class ResonaModAPI:
 
     def save_mod_detail(self, mod_json):
         data = json.loads(mod_json)
-        full_path = data["full_path"]
+        full_path = os.path.abspath(os.path.normpath(data["full_path"].replace("/", os.sep)))
         note = data.get("note", "")
         author = data.get("author", "")
         keybinds = data.get("keybinds", [])
+        new_name = data.get("name", "").strip()
         
+        if new_name:
+            curr_base = os.path.basename(full_path)
+            is_dis = curr_base.startswith("DISABLED_")
+            desired_base = f"DISABLED_{new_name}" if is_dis else new_name
+            if desired_base != curr_base:
+                parent = os.path.dirname(full_path)
+                desired_path = os.path.join(parent, desired_base)
+                if not os.path.exists(desired_path):
+                    try:
+                        os.rename(full_path, desired_path)
+                        full_path = desired_path
+                    except:
+                        pass
+
         config_path = os.path.join(full_path, ".ResonaMod_ModConfig.json")
         cfg = {}
         for old_cfg in [config_path, os.path.join(full_path, ".MewMod_ModConfig.json"), os.path.join(full_path, ".JASM_ModConfig.json")]:
@@ -1453,7 +1468,7 @@ class ResonaModAPI:
             save_mod_ini_keybinds(full_path, keybinds)
             
         self.log(f"💾 Đã lưu cấu hình & phím tắt cho: {os.path.basename(full_path)}")
-        return {"success": True}
+        return {"success": True, "new_path": full_path}
 
     def toggle_all_mods_for_char(self, char_folder, is_enable):
         char_p = os.path.join(WWMI_CHAR_PATH, char_folder)
@@ -1531,15 +1546,34 @@ class ResonaModAPI:
 
     def delete_mod(self, full_path):
         try:
+            if not full_path:
+                return {"success": False, "error": "Đường dẫn trống"}
             full_path = os.path.abspath(os.path.normpath(full_path.replace("/", os.sep)))
             if os.path.exists(full_path):
+                def remove_readonly(func, path, excinfo):
+                    try:
+                        import stat
+                        os.chmod(path, stat.S_IWRITE)
+                        func(path)
+                    except:
+                        pass
+
                 if os.path.isdir(full_path):
-                    shutil.rmtree(full_path, ignore_errors=True)
+                    shutil.rmtree(full_path, onerror=remove_readonly)
+                    if os.path.exists(full_path):
+                        subprocess.run(['cmd', '/c', f'rd /s /q "{full_path}"'], creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0x08000000))
                 else:
+                    try:
+                        import stat
+                        os.chmod(full_path, stat.S_IWRITE)
+                    except:
+                        pass
                     os.remove(full_path)
+
             self.log(f"🗑️ Đã xóa vĩnh viễn Mod: {os.path.basename(full_path)}")
             return {"success": True}
         except Exception as e:
+            self.log(f"❌ Lỗi xóa Mod: {e}")
             return {"success": False, "error": str(e)}
 
     def open_folder(self, path=""):
@@ -4889,7 +4923,8 @@ HTML_TEMPLATE = """
     const newNote = document.getElementById('insp-note').value;
 
     const newKbs = (selectedModDetail.keybinds || []).map((kb, idx) => {
-      const val = document.getElementById(`kb-input-${idx}`).value.trim();
+      const inputEl = document.getElementById(`kb-input-${idx}`);
+      const val = inputEl ? inputEl.value.trim() : kb.key;
       return { ...kb, key: val };
     });
 
@@ -4902,11 +4937,14 @@ HTML_TEMPLATE = """
     });
 
     const res = await window.pywebview.api.save_mod_detail(payload);
-    if (res.success) {
+    if (res && res.success) {
       alert('Đã lưu cấu hình mod thành công!');
-      loadInstalled(currentCharFolder);
+      const nextPath = res.new_path || selectedModDetail.full_path;
+      currentInspectedModPath = nextPath;
+      await loadInstalled(currentCharFolder, nextPath);
+      loadCharacters();
     } else {
-      alert('Lỗi lưu cấu hình: ' + (res.error || 'Không xác định'));
+      alert('Lỗi lưu cấu hình: ' + ((res && res.error) || 'Không xác định'));
     }
   }
 
@@ -4931,25 +4969,34 @@ HTML_TEMPLATE = """
     document.getElementById('insp-keybinds').innerHTML = '';
   }
 
+  function deleteInstalledModDirect(fullPath, modName = '') {
+    const name = modName || fullPath.replace(/\\/g, '/').split('/').pop().replace('DISABLED_', '');
+    confirmDeleteMod(fullPath, name);
+  }
+
   async function confirmDeleteMod(fullPath, modName) {
-    if (!confirm(`Bạn có chắc chắn muốn XÓA VĨNH VIỄN bản mod:\n"${modName}"\nkhỏi game không?\n\n(Thao tác này sẽ xóa thư mục mod và không thể khôi phục!)`)) {
+    const name = modName || 'bản mod này';
+    if (!confirm(`Bạn có chắc chắn muốn XÓA VĨNH VIỄN bản mod:\n"${name}"\nkhỏi game không?\n\n(Thao tác này sẽ xóa thư mục mod và không thể khôi phục!)`)) {
       return;
     }
     const res = await window.pywebview.api.delete_mod(fullPath);
     if (res && res.success) {
+      if (currentInspectedModPath === fullPath) {
+        currentInspectedModPath = '';
+      }
       await loadCharacters();
-      loadInstalled(currentCharFolder);
+      await loadInstalled(currentCharFolder);
     } else {
-      alert('Lỗi xóa bản mod: ' + (res.error || 'Không xác định'));
+      alert('Lỗi xóa bản mod: ' + ((res && res.error) || 'Không xác định'));
     }
   }
 
   function deleteCurrentInspectedMod() {
     if (!selectedModDetail || !selectedModDetail.full_path) {
-      alert('Vui lòng chọn một bản mod để xóa.');
+      alert('Vui lòng chọn một bản mod trong danh sách để thực hiện thao tác xóa.');
       return;
     }
-    confirmDeleteMod(selectedModDetail.full_path, selectedModDetail.name || 'Bản mod này');
+    confirmDeleteMod(selectedModDetail.full_path, selectedModDetail.name || 'Bản mod đang chọn');
   }
 
   /* MOD FIXER MODAL */
