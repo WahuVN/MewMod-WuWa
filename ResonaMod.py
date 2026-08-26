@@ -58,6 +58,7 @@ import queue
 import socket
 import tempfile
 import stat
+import uuid
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from PIL import Image, ImageOps, ImageDraw
@@ -165,7 +166,7 @@ def resolve_wwmi_path():
         return os.path.abspath(custom_wwmi)
 
     # 2. Kiểm tra nếu Tool được đặt trực tiếp bên trong thư mục WWMI
-    # Ví dụ: D:\WWMI\ResonaMod hoặc D:\WWMI\MewMod\ResonaMod.exe
+    # Ví dụ: D:\WWMI\ResonaMod hoặc D:\WWMI\ResonaMod.exe
     for direct_cand in [BASE_DIR, os.path.dirname(BASE_DIR)]:
         if direct_cand and os.path.isdir(direct_cand):
             if os.path.exists(os.path.join(direct_cand, "3DMigoto Loader.exe")) or \
@@ -679,7 +680,7 @@ def optimize_mod_structure(extracted_root, base_mod_name, fallback_folder="", on
     for root, dirs, files in os.walk(final_mod_dir):
         for f in files:
             ext = os.path.splitext(f)[1].lower()
-            if ext in ['.png', '.jpg', '.jpeg', '.webp'] and f.lower() != ".jasm_cover.jpg":
+            if ext in ['.png', '.jpg', '.jpeg', '.webp'] and not f.lower().startswith(".resonamod_cover"):
                 preview_images.append(os.path.join(root, f))
     # Đảm bảo luôn có tệp mod.ini chuẩn để WWMI/3DMigoto nạp 100%
     if not os.path.exists(os.path.join(final_mod_dir, "mod.ini")):
@@ -881,6 +882,9 @@ class ResonaModAPI:
         self._window = None
         self._cache = {}
         self._cache_time = {}
+        self._dl_queue = queue.Queue()
+        self._dl_worker_thread = None
+        self._dl_lock = threading.Lock()
 
     def set_window(self, window):
         self._window = window
@@ -1135,26 +1139,63 @@ class ResonaModAPI:
             return {"success": False, "error": str(e), "items": []}
 
     def download_and_install(self, mod_json):
-        mod = json.loads(mod_json)
-        source = mod.get("source")
+        try:
+            mod = json.loads(mod_json)
+        except:
+            mod = {}
+        source = mod.get("source", "huihui168")
         mod_id = mod.get("id")
-        title = mod.get("title")
+        title = mod.get("title", "Bản Mod")
         link = mod.get("link")
         context_folder = mod.get("context_folder", "")
         img_url = mod.get("img_url", "")
         author = mod.get("author", "Modder")
         
-        threading.Thread(target=self._download_worker, args=(source, mod_id, title, link, context_folder, img_url, author), daemon=True).start()
-        return {"started": True}
+        with self._dl_lock:
+            is_busy = (self._dl_worker_thread is not None and self._dl_worker_thread.is_alive())
+            self._dl_queue.put((source, mod_id, title, link, context_folder, img_url, author))
+            qsize = self._dl_queue.qsize()
+            if not is_busy:
+                self._dl_worker_thread = threading.Thread(target=self._process_download_queue, daemon=True)
+                self._dl_worker_thread.start()
+            else:
+                self.log(f"[Hàng Đợi Tải] Đã thêm [{title}] vào hàng đợi tải (Vị trí: #{qsize}).")
+                if self._window:
+                    self._window.evaluate_js(f"window.onModQueued('{title.replace(chr(39), '')}', {qsize});")
+        return {"started": True, "queued": is_busy, "queue_size": qsize}
 
-    def _download_worker(self, source, mod_id, title, link, context_folder="", img_url="", author="Modder"):
+    def _process_download_queue(self):
+        while True:
+            try:
+                item = self._dl_queue.get_nowait()
+            except queue.Empty:
+                break
+
+            source, mod_id, title, link, context_folder, img_url, author = item
+            remaining = self._dl_queue.qsize()
+            try:
+                self._download_worker(source, mod_id, title, link, context_folder, img_url, author, remaining)
+            except Exception as e:
+                self.log(f"[Lỗi Tải Mod] {e}")
+                if self._window:
+                    self._window.evaluate_js(f"window.finishDownloadError('{str(e).replace(chr(39), '')}');")
+            finally:
+                self._dl_queue.task_done()
+
+    def _download_worker(self, source, mod_id, title, link, context_folder="", img_url="", author="Modder", queue_remaining=0):
         self.log(f"[Tải Xuống] Bắt đầu tải bản mod: {title}...")
-        self._window.evaluate_js(f"window.showDownloadWidget('{title.replace(chr(39), '')}');")
+        if self._window:
+            self._window.evaluate_js(f"window.showDownloadWidget('{title.replace(chr(39), '')}', {queue_remaining});")
+        
+        task_uid = uuid.uuid4().hex[:8]
+        temp_file = ""
+        temp_ext = os.path.join(tempfile.gettempdir(), f"ResonaMod_Extract_{task_uid}")
         
         try:
             def _prog(pct, cur_mb, tot_mb, speed_mb):
                 pct_100 = round(pct * 100, 1)
-                self._window.evaluate_js(f"window.updateDownloadProgress({pct_100}, '{cur_mb:.2f}', '{tot_mb:.2f}', '{speed_mb:.2f}');")
+                if self._window:
+                    self._window.evaluate_js(f"window.updateDownloadProgress({pct_100}, '{cur_mb:.2f}', '{tot_mb:.2f}', '{speed_mb:.2f}', {queue_remaining});")
 
             if source == "gamebanana":
                 profile_url = f"https://gamebanana.com/apiv11/Mod/{mod_id}/ProfilePage"
@@ -1169,7 +1210,6 @@ class ResonaModAPI:
                 fname = f_obj.get("_sFile", f"GB_Mod_{mod_id}.zip")
                 fsize = f_obj.get("_nFilesize", 0)
                 
-                # Check for high-res preview image in GameBanana profile
                 preview_media = data.get("_aPreviewMedia", {}).get("_aImages", [])
                 if preview_media and not img_url:
                     base_u = preview_media[0].get("_sBaseUrl", "")
@@ -1177,7 +1217,7 @@ class ResonaModAPI:
                     if base_u and file_u:
                         img_url = f"{base_u}/{file_u}"
                 
-                temp_file = os.path.join(os.environ.get("TEMP", ""), fname)
+                temp_file = os.path.join(tempfile.gettempdir(), f"ResonaMod_{task_uid}_{fname}")
                 dl_req = urllib.request.Request(dl_url, headers=HEADERS)
                 with urllib.request.urlopen(dl_req, context=SSL_CTX, timeout=120) as r, open(temp_file, "wb") as out_f:
                     tot = int(r.headers.get('content-length', fsize))
@@ -1193,20 +1233,13 @@ class ResonaModAPI:
                             el = max(0.1, time.time() - st)
                             _prog(dl / tot, dl / (1024*1024), tot / (1024*1024), (dl / (1024*1024)) / el)
                             
-                temp_ext = os.path.join(os.environ.get("TEMP", ""), "WuWaExtract")
-                if os.path.exists(temp_ext):
-                    shutil.rmtree(temp_ext, ignore_errors=True)
                 extract_archive(temp_file, temp_ext, password="")
                 char_f, clean_n, final_d = optimize_mod_structure(temp_ext, fname, context_folder, online_cover_url=img_url, author=author, desc=title)
-                shutil.rmtree(temp_ext, ignore_errors=True)
-                try:
-                    os.remove(temp_file)
-                except:
-                    pass
             elif source == "nexus":
                 webbrowser.open(link)
                 self.log(f"[NexusMods] Đã mở liên kết trình duyệt: {link}")
-                self._window.evaluate_js(f"window.finishDownloadSuccess('{title}', 'others');")
+                if self._window:
+                    self._window.evaluate_js(f"window.finishDownloadSuccess('{title.replace(chr(39), '')}', 'others', {queue_remaining});")
                 return
             else:
                 req = urllib.request.Request(link, headers=HEADERS)
@@ -1234,7 +1267,7 @@ class ResonaModAPI:
                     url_data = json.loads(resp.read().decode('utf-8'))
                 direct_url = url_data.get("data", {}).get("urls", [{}])[0].get("url")
                 
-                temp_file = os.path.join(os.environ.get("TEMP", ""), filename)
+                temp_file = os.path.join(tempfile.gettempdir(), f"ResonaMod_{task_uid}_{filename}")
                 with urllib.request.urlopen(urllib.request.Request(direct_url, headers=HEADERS), context=SSL_CTX, timeout=120) as r, open(temp_file, "wb") as out_f:
                     tot = int(r.headers.get('content-length', target_file.get("size", 0)))
                     dl = 0
@@ -1249,22 +1282,24 @@ class ResonaModAPI:
                             el = max(0.1, time.time() - st)
                             _prog(dl / tot, dl / (1024*1024), tot / (1024*1024), (dl / (1024*1024)) / el)
                             
-                temp_ext = os.path.join(os.environ.get("TEMP", ""), "WuWaExtract")
-                if os.path.exists(temp_ext):
-                    shutil.rmtree(temp_ext, ignore_errors=True)
                 extract_archive(temp_file, temp_ext, password="huihui")
                 char_f, clean_n, final_d = optimize_mod_structure(temp_ext, filename, context_folder, online_cover_url=img_url, author=author, desc=title)
+
+            self.log(f"[Cài Đặt] Đã cài đặt thành công: [{clean_n}] -> Thư mục: {char_f.upper()}")
+            if self._window:
+                self._window.evaluate_js(f"window.finishDownloadSuccess('{clean_n.replace(chr(39), '')}', '{char_f}', {queue_remaining});")
+        except Exception as e:
+            self.log(f"[Lỗi Tải Mod] {e}")
+            if self._window:
+                self._window.evaluate_js(f"window.finishDownloadError('{str(e).replace(chr(39), '')}');")
+        finally:
+            if temp_ext and os.path.exists(temp_ext):
                 shutil.rmtree(temp_ext, ignore_errors=True)
+            if temp_file and os.path.exists(temp_file):
                 try:
                     os.remove(temp_file)
                 except:
                     pass
-
-            self.log(f"[Cài Đặt] Đã cài đặt thành công: [{clean_n}] -> Thư mục: {char_f.upper()}")
-            self._window.evaluate_js(f"window.finishDownloadSuccess('{clean_n}', '{char_f}');")
-        except Exception as e:
-            self.log(f"[Lỗi Tải Mod] {e}")
-            self._window.evaluate_js(f"window.finishDownloadError('{str(e)}');")
 
     def import_from_direct_link(self, link_url):
         self.log(f"[Liên Kết] Đang phân tích liên kết: {link_url}...")
@@ -1306,21 +1341,19 @@ class ResonaModAPI:
                         is_disabled = m_f.startswith("DISABLED_")
                         clean_n = m_f.replace("DISABLED_", "")
                         
-                        has_cover = os.path.exists(os.path.join(full_m, ".ResonaMod_Cover.jpg")) or os.path.exists(os.path.join(full_m, ".MewMod_Cover.jpg")) or os.path.exists(os.path.join(full_m, ".JASM_Cover.jpg"))
+                        has_cover = os.path.exists(os.path.join(full_m, ".ResonaMod_Cover.jpg"))
                         
                         author = "Modder"
                         note = ""
-                        for cfg_name in [".ResonaMod_ModConfig.json", ".MewMod_ModConfig.json", ".JASM_ModConfig.json"]:
-                            config_path = os.path.join(full_m, cfg_name)
-                            if os.path.exists(config_path):
-                                try:
-                                    with open(config_path, "r", encoding="utf-8") as f:
-                                        cfg = json.load(f)
-                                        author = cfg.get("Author", "Modder")
-                                        note = cfg.get("Note", "")
-                                        break
-                                except:
-                                    pass
+                        config_path = os.path.join(full_m, ".ResonaMod_ModConfig.json")
+                        if os.path.exists(config_path):
+                            try:
+                                with open(config_path, "r", encoding="utf-8") as f:
+                                    cfg = json.load(f)
+                                    author = cfg.get("Author", "Modder")
+                                    note = cfg.get("Note", "")
+                            except:
+                                pass
                                     
                         try:
                             mod_date = time.strftime('%m/%d/%Y', time.localtime(entry.stat().st_mtime))
@@ -1353,10 +1386,6 @@ class ResonaModAPI:
 
         keybinds = parse_mod_ini_keybinds(full_path)
         config_path = os.path.join(full_path, ".ResonaMod_ModConfig.json")
-        if not os.path.exists(config_path):
-            config_path = os.path.join(full_path, ".MewMod_ModConfig.json")
-        if not os.path.exists(config_path):
-            config_path = os.path.join(full_path, ".JASM_ModConfig.json")
         author = "Modder"
         desc = ""
         note = ""
@@ -1373,18 +1402,14 @@ class ResonaModAPI:
         # Scan all images inside mod directory
         all_imgs = []
         cover_path = os.path.join(full_path, ".ResonaMod_Cover.jpg")
-        if not os.path.exists(cover_path):
-            cover_path = os.path.join(full_path, ".MewMod_Cover.jpg")
-        if not os.path.exists(cover_path):
-            cover_path = os.path.join(full_path, ".JASM_Cover.jpg")
         if os.path.exists(cover_path):
-            all_imgs.append({"path": cover_path, "name": "Ảnh Bìa (.ResonaMod_Cover.jpg)", "base64": get_image_base64_from_path(cover_path)})
+            all_imgs.append({"path": cover_path, "name": "Ảnh Bìa Chính (Cover)", "base64": get_image_base64_from_path(cover_path)})
 
         for root, dirs, files in os.walk(full_path):
             for f in files:
                 p = os.path.join(root, f)
                 ext = os.path.splitext(f)[1].lower()
-                if ext in ['.jpg', '.jpeg', '.png', '.webp'] and f.lower() not in [".resonamod_cover.jpg", ".mewmod_cover.jpg", ".jasm_cover.jpg"]:
+                if ext in ['.jpg', '.jpeg', '.png', '.webp'] and not f.lower().startswith(".resonamod_cover"):
                     b64 = get_image_base64_from_path(p)
                     if b64:
                         all_imgs.append({"path": p, "name": f, "base64": b64})
@@ -1458,14 +1483,12 @@ class ResonaModAPI:
 
         config_path = os.path.join(full_path, ".ResonaMod_ModConfig.json")
         cfg = {}
-        for old_cfg in [config_path, os.path.join(full_path, ".MewMod_ModConfig.json"), os.path.join(full_path, ".JASM_ModConfig.json")]:
-            if os.path.exists(old_cfg):
-                try:
-                    with open(old_cfg, "r", encoding="utf-8") as f:
-                        cfg = json.load(f)
-                    break
-                except:
-                    pass
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    cfg = json.load(f)
+            except:
+                pass
         cfg["Author"] = author
         cfg["Note"] = note
         with open(config_path, "w", encoding="utf-8") as f:
@@ -2712,7 +2735,7 @@ HTML_TEMPLATE = """
   }
 
   /* =========================================================================
-     INSTALLED VIEW (JASM PRO DATA TABLE + RIGHT INSPECTOR)
+     INSTALLED VIEW (RESONAMOD PRO DATA TABLE + RIGHT INSPECTOR)
      ========================================================================= */
   .installed-split {
     flex: 1;
@@ -4678,7 +4701,7 @@ HTML_TEMPLATE = """
             <div class="card-author">${m.author}</div>
           </div>
           <div class="card-actions">
-            <button class="btn-card-dl" onclick='downloadMod(${JSON.stringify(m)})' title="Tải và cài đặt bản mod này vào game">
+            <button class="btn-card-dl" onclick='downloadMod(${JSON.stringify(m)}, this)' title="Tải và cài đặt bản mod này vào game">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               <span>Tải Xuống</span>
             </button>
@@ -5245,54 +5268,73 @@ HTML_TEMPLATE = """
     if (w) w.className = 'corner-dl-widget';
   }
 
-  function showDownloadWidget(title = 'Đang tải bản mod...') {
+  function showDownloadWidget(title = 'Đang tải bản mod...', queueRemaining = 0) {
     if (dlWidgetTimeout) clearTimeout(dlWidgetTimeout);
     const w = document.getElementById('dl-widget');
     if (!w) return;
     w.className = 'corner-dl-widget active';
     document.getElementById('dl-title').innerText = title;
-    document.getElementById('dl-subtitle').innerText = 'Đang kết nối máy chủ...';
+    const queueTxt = queueRemaining > 0 ? ` (Còn ${queueRemaining} mod trong hàng đợi)` : '';
+    document.getElementById('dl-subtitle').innerText = 'Đang kết nối máy chủ...' + queueTxt;
     document.getElementById('dl-bar').style.width = '0%';
     document.getElementById('dl-pct').innerText = '0%';
     document.getElementById('dl-speed').innerText = 'Đang chuẩn bị...';
   }
 
-  function downloadMod(modObj) {
+  function onModQueued(title, queuePos) {
+    appendLog(`[Hàng Đợi] Đã thêm [${title}] vào hàng đợi tải (Vị trí #${queuePos}).`);
+    const w = document.getElementById('dl-widget');
+    if (w && !w.classList.contains('active')) {
+      showDownloadWidget(title, queuePos - 1);
+    }
+  }
+
+  function downloadMod(modObj, btnEl = null) {
     const payload = Object.assign({}, modObj, {
       context_folder: currentCharFolder || '',
       context_name: currentChar || ''
     });
+    if (btnEl) {
+      btnEl.style.opacity = '0.7';
+      btnEl.style.pointerEvents = 'none';
+      btnEl.innerHTML = `<span>⏳ Đã Thêm Hàng Đợi</span>`;
+    }
     showDownloadWidget(modObj.title);
     window.pywebview.api.download_and_install(JSON.stringify(payload));
   }
 
-  function updateDownloadProgress(pct, cur, tot, speed) {
+  function updateDownloadProgress(pct, cur, tot, speed, queueRemaining = 0) {
     const w = document.getElementById('dl-widget');
     if (w && !w.classList.contains('active')) w.className = 'corner-dl-widget active';
-    document.getElementById('dl-subtitle').innerText = 'Đang tải xuống dữ liệu...';
+    const queueTxt = queueRemaining > 0 ? ` (Còn ${queueRemaining} mod trong hàng đợi)` : '';
+    document.getElementById('dl-subtitle').innerText = 'Đang tải xuống dữ liệu...' + queueTxt;
     document.getElementById('dl-bar').style.width = pct + '%';
     document.getElementById('dl-pct').innerText = pct + '% (' + cur + '/' + tot + ' MB)';
     document.getElementById('dl-speed').innerText = speed + ' MB/s';
   }
 
-  function finishDownloadSuccess(name, char) {
+  function finishDownloadSuccess(name, char, queueRemaining = 0) {
     const w = document.getElementById('dl-widget');
     if (w) w.className = 'corner-dl-widget active success';
     document.getElementById('dl-bar').style.width = '100%';
-    document.getElementById('dl-title').innerText = 'Đã cài đặt thành công';
-    document.getElementById('dl-subtitle').innerText = name || 'Hoàn tất giải nén và nạp vào game.';
-    document.getElementById('dl-speed').innerText = 'Hoàn tất 100%';
+    document.getElementById('dl-title').innerText = 'Đã cài đặt: ' + (name || 'Bản mod');
+    if (queueRemaining > 0) {
+      document.getElementById('dl-subtitle').innerText = `Hoàn tất giải nén! Đang tải mod tiếp theo (${queueRemaining} mod còn lại)...`;
+      document.getElementById('dl-speed').innerText = 'Đang nạp tiếp...';
+    } else {
+      document.getElementById('dl-subtitle').innerText = 'Hoàn tất giải nén toàn bộ mod trong hàng đợi.';
+      document.getElementById('dl-speed').innerText = 'Hoàn tất 100%';
+      if (dlWidgetTimeout) clearTimeout(dlWidgetTimeout);
+      dlWidgetTimeout = setTimeout(() => {
+        hideDownloadWidget();
+      }, 4500);
+    }
     
     // Auto update background lists without disrupting the user
     loadCharacters();
     if (currentView === 'installed') {
-      loadInstalled(currentCharFolder);
+      loadInstalled(currentCharFolder, '', true);
     }
-    
-    if (dlWidgetTimeout) clearTimeout(dlWidgetTimeout);
-    dlWidgetTimeout = setTimeout(() => {
-      hideDownloadWidget();
-    }, 4500);
   }
 
   function finishDownloadError(err) {
