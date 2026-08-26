@@ -9,6 +9,23 @@ Hệ thống quản lý, cấu hình, xử lý xung đột và tối ưu hóa b�
 
 import os
 import sys
+
+# Đảm bảo PythonNet trên Windows dùng nền tảng .NET Framework (netfx) có sẵn trên mọi máy Windows 10/11
+if sys.platform == "win32":
+    os.environ["PYTHONNET_RUNTIME"] = "netfx"
+    try:
+        import pythonnet
+        if not getattr(pythonnet, "_LOADED", False):
+            try:
+                pythonnet.load("netfx")
+            except Exception:
+                try:
+                    pythonnet.load()
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
 import io
 import re
 import json
