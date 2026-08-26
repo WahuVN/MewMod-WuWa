@@ -52,8 +52,13 @@ print("Dang chay PyInstaller...")
 res = subprocess.run(cmd, cwd=BASE_DIR)
 
 if res.returncode == 0:
+    import re
+    with open(os.path.join(BASE_DIR, "ResonaMod.py"), "r", encoding="utf-8") as f:
+        m = re.search(r'APP_VERSION\s*=\s*["\']([^"\']+)["\']', f.read())
+        APP_VERSION = m.group(1) if m else "1.0.1"
+    
     dist_dir = os.path.join(BASE_DIR, 'dist', 'ResonaMod')
-    zip_path = os.path.join(BASE_DIR, 'dist', 'ResonaMod-v1.0.0-Standalone.zip')
+    zip_path = os.path.join(BASE_DIR, 'dist', f'ResonaMod-v{APP_VERSION}-Standalone.zip')
     print("\n📦 Dang nen thu muc phat hanh thanh file .zip...")
     try:
         shutil.make_archive(zip_path.replace('.zip', ''), 'zip', os.path.join(BASE_DIR, 'dist'), 'ResonaMod')

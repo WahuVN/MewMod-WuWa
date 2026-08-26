@@ -148,7 +148,7 @@ AVATARS_DIR = os.path.join(getattr(sys, '_MEIPASS', BASE_DIR), "avatars")
 if not os.path.exists(AVATARS_DIR):
     AVATARS_DIR = os.path.join(BASE_DIR, "avatars")
 APP_NAME = "ResonaMod"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.0.1"
 GITHUB_REPO = "WahuVN/ResonaMod"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 
@@ -3096,7 +3096,7 @@ HTML_TEMPLATE = """
       </div>
       <div class="brand-text">
         <div class="brand-title">
-          RESONAMOD <span class="brand-badge">v1.0.0</span>
+          RESONAMOD <span class="brand-badge">v{APP_VERSION}</span>
         </div>
         <div class="brand-sub">Trình Quản Lý & Cài Đặt Mod Wuthering Waves</div>
       </div>
@@ -3498,7 +3498,7 @@ HTML_TEMPLATE = """
           </div>
           <div>
             <div style="font-size: 16px; font-weight: 700; color: #fff;" id="update-modal-title">CẬP NHẬT PHIÊN BẢN RESONAMOD</div>
-            <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">Phiên bản đang chạy: <b id="lbl-cur-ver" style="color: var(--accent);">v1.0.0</b></div>
+            <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">Phiên bản đang chạy: <b id="lbl-cur-ver" style="color: var(--accent);">v{APP_VERSION}</b></div>
           </div>
         </div>
         <button class="btn btn-secondary" style="color: var(--danger); padding: 4px 10px;" onclick="closeUpdateModal()">✕ Đóng</button>
@@ -4965,7 +4965,7 @@ HTML_TEMPLATE = """
 
 def main():
     api = ResonaModAPI()
-    rendered_html = HTML_TEMPLATE.replace("{APP_LOGO_B64}", APP_LOGO_B64).replace("{INITIAL_CHARACTERS_DATA}", INITIAL_CHARACTERS_JSON)
+    rendered_html = HTML_TEMPLATE.replace("{APP_LOGO_B64}", APP_LOGO_B64).replace("{INITIAL_CHARACTERS_DATA}", INITIAL_CHARACTERS_JSON).replace("{APP_VERSION}", APP_VERSION)
     window = webview.create_window(
         title=f"✨ {APP_NAME} Studio v{APP_VERSION} - Trình Quản Lý & Cấu Hình Mod Skin",
         html=rendered_html,
