@@ -225,7 +225,7 @@ AVATARS_DIR = os.path.join(getattr(sys, '_MEIPASS', BASE_DIR), "avatars")
 if not os.path.exists(AVATARS_DIR):
     AVATARS_DIR = os.path.join(BASE_DIR, "avatars")
 APP_NAME = "ResonaMod"
-APP_VERSION = "1.0.2"
+APP_VERSION = "1.0.3"
 GITHUB_REPO = "WahuVN/ResonaMod"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 
@@ -1804,22 +1804,44 @@ class ResonaModAPI:
                 GITHUB_API_URL,
                 headers={"User-Agent": "ResonaMod", "Accept": "application/vnd.github.v3+json"}
             )
+            data = None
             try:
                 with urllib.request.urlopen(req, context=SSL_CTX, timeout=6) as r:
                     data = json.loads(r.read().decode("utf-8"))
-            except urllib.error.HTTPError as http_err:
-                if http_err.code == 404:
-                    return {
-                        "success": True,
-                        "current_version": APP_VERSION,
-                        "latest_version": APP_VERSION,
-                        "has_update": False,
-                        "title": "ResonaMod",
-                        "changelog": "Bạn đang sử dụng phiên bản mới nhất!",
-                        "html_url": f"https://github.com/{GITHUB_REPO}",
-                        "direct_url": f"https://github.com/{GITHUB_REPO}"
-                    }
-                raise http_err
+            except Exception:
+                try:
+                    fallback_req = urllib.request.Request(
+                        f"https://github.com/{GITHUB_REPO}/releases/latest",
+                        headers={"User-Agent": "Mozilla/5.0"}
+                    )
+                    with urllib.request.urlopen(fallback_req, context=SSL_CTX, timeout=6) as resp:
+                        final_url = resp.geturl()
+                        tag_match = re.search(r'/tag/v?([0-9.]+)', final_url)
+                        if tag_match:
+                            latest_v = tag_match.group(1)
+                            data = {
+                                "tag_name": f"v{latest_v}",
+                                "name": f"Bản cập nhật v{latest_v}",
+                                "body": f"Đã có phiên bản v{latest_v} mới nhất trên GitHub.",
+                                "html_url": f"https://github.com/{GITHUB_REPO}/releases/tag/v{latest_v}",
+                                "assets": [
+                                    {"name": f"ResonaMod-v{latest_v}-Standalone.zip", "browser_download_url": f"https://github.com/{GITHUB_REPO}/releases/download/v{latest_v}/ResonaMod-v{latest_v}-Standalone.zip"}
+                                ]
+                            }
+                except:
+                    pass
+
+            if not data:
+                return {
+                    "success": True,
+                    "current_version": APP_VERSION,
+                    "latest_version": APP_VERSION,
+                    "has_update": False,
+                    "title": "ResonaMod",
+                    "changelog": "Bạn đang sử dụng phiên bản mới nhất!",
+                    "html_url": f"https://github.com/{GITHUB_REPO}",
+                    "direct_url": f"https://github.com/{GITHUB_REPO}"
+                }
 
             latest_tag = data.get("tag_name", "").strip().lstrip("v")
             cur_tag = APP_VERSION.strip().lstrip("v")
@@ -1863,6 +1885,62 @@ class ResonaModAPI:
             return {"success": True}
         except Exception as e:
             return {"success": False, "error": str(e)}
+
+    def start_in_app_update(self, direct_url):
+        def _update_worker():
+            self.log("[Cập Nhật] Đang chuẩn bị tải gói nâng cấp...")
+            self._window.evaluate_js("window.showDownloadWidget('Đang Tải Bản Cập Nhật Mới...');")
+            try:
+                def _prog(pct, cur_mb, tot_mb, speed_mb):
+                    pct_100 = round(pct * 100, 1)
+                    self._window.evaluate_js(f"window.updateDownloadProgress({pct_100}, '{cur_mb:.2f}', '{tot_mb:.2f}', '{speed_mb:.2f}');")
+
+                temp_zip = os.path.join(tempfile.gettempdir(), f"ResonaMod_Update_{int(time.time())}.zip")
+                req = urllib.request.Request(direct_url, headers=HEADERS)
+                with urllib.request.urlopen(req, context=SSL_CTX, timeout=180) as r, open(temp_zip, "wb") as out_f:
+                    tot = int(r.headers.get('content-length', 0))
+                    dl = 0
+                    st = time.time()
+                    while True:
+                        c = r.read(1024 * 64)
+                        if not c:
+                            break
+                        out_f.write(c)
+                        dl += len(c)
+                        if tot > 0:
+                            el = max(0.1, time.time() - st)
+                            _prog(dl / tot, dl / (1024*1024), tot / (1024*1024), (dl / (1024*1024)) / el)
+
+                self.log("[Cập Nhật] Đã tải xong gói cập nhật! Đang giải nén và khởi động lại...")
+                self._window.evaluate_js("window.finishDownloadSuccess('Bản Cập Nhật', 'system');")
+                
+                app_dir = BASE_DIR
+                updater_bat = os.path.join(tempfile.gettempdir(), "resonamod_updater.bat")
+                extract_temp = os.path.join(tempfile.gettempdir(), f"ResonaMod_Ext_{int(time.time())}")
+                
+                with open(updater_bat, "w", encoding="utf-8") as f:
+                    f.write(f"""@echo off
+timeout /t 2 /nobreak > nul
+"{SEVEN_ZIP_PATH}" x "{temp_zip}" -o"{extract_temp}" -y
+if exist "{extract_temp}\\ResonaMod" (
+    xcopy /s /y /e "{extract_temp}\\ResonaMod\\*" "{app_dir}\\"
+) else (
+    xcopy /s /y /e "{extract_temp}\\*" "{app_dir}\\"
+)
+rmdir /s /q "{extract_temp}"
+del /f /q "{temp_zip}"
+start "" "{os.path.join(app_dir, 'ResonaMod.exe')}"
+del "%~f0"
+""")
+                subprocess.Popen(["cmd.exe", "/c", updater_bat], creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+                time.sleep(1)
+                os._exit(0)
+            except Exception as e:
+                self.log(f"[Lỗi Cập Nhật] {e}")
+                self._window.evaluate_js(f"window.finishDownloadError('{str(e)}');")
+
+        threading.Thread(target=_update_worker, daemon=True).start()
+        return {"success": True, "msg": "Đang bắt đầu tải bản cập nhật"}
 
 
 # =============================================================================
@@ -4138,14 +4216,26 @@ HTML_TEMPLATE = """
     }
     
     if (footer) {
-      footer.innerHTML = `
-        <button class="btn btn-secondary" onclick="closeUpdateModal()">Đóng</button>
-        <button class="btn btn-secondary" onclick="window.pywebview.api.open_external_url('${latestUpdateInfo.html_url}')">🌐 Xem Release GitHub</button>
-        <button class="btn btn-primary" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="window.pywebview.api.open_external_url('${latestUpdateInfo.direct_url}')">⬇️ Tải Cập Nhật Ngay</button>
-      `;
+      if (latestUpdateInfo.has_update && latestUpdateInfo.direct_url) {
+        footer.innerHTML = `
+          <button class="btn btn-secondary" onclick="closeUpdateModal()">Bỏ Qua</button>
+          <button class="btn btn-secondary" onclick="window.pywebview.api.open_external_url('${latestUpdateInfo.html_url}')">🌐 Xem Release GitHub</button>
+          <button class="btn btn-primary" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 14px rgba(16,185,129,0.3);" onclick="startAutoUpdate('${latestUpdateInfo.direct_url}')">⚡ Tự Động Cập Nhật Ngay</button>
+        `;
+      } else {
+        footer.innerHTML = `
+          <button class="btn btn-secondary" onclick="closeUpdateModal()">Đóng</button>
+          <button class="btn btn-secondary" onclick="window.pywebview.api.open_external_url('${latestUpdateInfo.html_url}')">🌐 Xem Release GitHub</button>
+        `;
+      }
     }
     
     document.getElementById('update-modal').style.display = 'flex';
+  }
+
+  function startAutoUpdate(directUrl) {
+    closeUpdateModal();
+    window.pywebview.api.start_in_app_update(directUrl);
   }
 
   function closeUpdateModal() {
