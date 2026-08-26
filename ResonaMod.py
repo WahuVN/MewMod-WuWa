@@ -3957,6 +3957,13 @@ HTML_TEMPLATE = """
     setInterval(() => {
       fetch('/api/heartbeat').catch(() => {});
     }, 2000);
+    window.addEventListener('focus', () => fetch('/api/heartbeat').catch(() => {}));
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') fetch('/api/heartbeat').catch(() => {});
+    });
+    window.addEventListener('beforeunload', () => {
+      try { navigator.sendBeacon('/api/shutdown'); } catch(e) {}
+    });
     setTimeout(() => {
       window.dispatchEvent(new Event('pywebviewready'));
       if (typeof initApp === 'function') initApp();
@@ -5214,6 +5221,7 @@ class ResonaServerHandler(BaseHTTPRequestHandler):
         pass  # Tắt log HTTP mặc định để giữ console sạch sẽ
 
     def do_GET(self):
+        global LAST_HEARTBEAT, APP_STARTED
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path in ('/', '/index.html'):
             rendered = HTML_TEMPLATE.replace("{APP_LOGO_B64}", APP_LOGO_B64).replace("{INITIAL_CHARACTERS_DATA}", INITIAL_CHARACTERS_JSON).replace("{APP_VERSION}", APP_VERSION)
@@ -5252,9 +5260,15 @@ class ResonaServerHandler(BaseHTTPRequestHandler):
                 except (BrokenPipeError, ConnectionResetError):
                     break
         elif parsed.path in ('/api/ping', '/api/heartbeat'):
-            global LAST_HEARTBEAT, APP_STARTED
             LAST_HEARTBEAT = time.time()
             APP_STARTED = True
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(b'{"ok": true}')
+        elif parsed.path == '/api/shutdown':
+            LAST_HEARTBEAT = 0  # Force immediate shutdown
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
@@ -5364,16 +5378,20 @@ def main():
 
     proc = launch_edge_app(app_url, width=1320, height=880)
 
-    # Giữ tiến trình chạy mượt mà và tự động thoát khi đóng cửa sổ
+    # Giữ tiến trình chạy mượt mà, ổn định và tự động thoát khi tắt app
     start_time = time.time()
     try:
         while True:
             time.sleep(1)
+            # Nếu tiến trình Edge còn đang chạy trực tiếp, giữ nguyên server
+            if proc and proc.poll() is None:
+                continue
+            
             if APP_STARTED:
-                if time.time() - LAST_HEARTBEAT > 6:
+                if time.time() - LAST_HEARTBEAT > 120 or LAST_HEARTBEAT == 0:
                     break
             else:
-                if proc and proc.poll() is not None and (time.time() - start_time > 30):
+                if time.time() - start_time > 45:
                     break
     except KeyboardInterrupt:
         pass
