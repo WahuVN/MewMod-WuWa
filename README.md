@@ -7,6 +7,7 @@
 
 <p align="center">
   <a href="https://github.com/WahuVN/MewMod-WuWa/releases"><img src="https://img.shields.io/badge/Bản_mới_nhất-v1.0.0-brightgreen?style=flat-square" alt="Version"></a>
+  <a href="https://discord.gg/tuRCj47sy"><img src="https://img.shields.io/badge/Discord-Tham_Gia_Giao_Lưu-5865F2?logo=discord&logoColor=white&style=flat-square" alt="Discord"></a>
   <img src="https://img.shields.io/badge/Hỗ_trợ-Windows_10%2F11-blue?style=flat-square" alt="Platform">
 </p>
 
@@ -65,6 +66,11 @@ ResonaMod/
 * **[WuWa Mod Fixer](https://github.com/Moonholder)** (bởi **Moonholder**): Công cụ tự động sửa lỗi vertex hash, LOD bias, phục hồi mesh cho các bản cập nhật WuWa.
 * **[3DMigoto & WWMI / XXMI](https://github.com/SilentNightSound/XXMI)** (bởi **Chiri**, **bo3b**, **SilentNightSound**, **Spectrum** & XXMI Team): Bộ nạp chèn mod skin vào game Wuthering Waves.
 * **[GameBanana](https://gamebanana.com/games/20358)**, **[Huihui168](https://www.huihui168.com/)**, **[NexusMods](https://www.nexusmods.com/wutheringwaves)**: Nguồn chia sẻ mod skin của cộng đồng modder.
+
+---
+
+## 💬 Cộng đồng & Hỗ trợ
+* **Discord**: [Tham gia Server Discord (Giao lưu & Hỗ trợ Mod)](https://discord.gg/tuRCj47sy)
 
 ---
 
