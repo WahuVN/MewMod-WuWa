@@ -106,6 +106,12 @@ if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{
     return tuple(lines)
 
 
+class FileDialog:
+    OPEN = 1
+    FOLDER = 10
+    SAVE = 2
+
+
 class WindowProxy:
     def __init__(self):
         pass
@@ -113,8 +119,8 @@ class WindowProxy:
     def evaluate_js(self, js_code):
         GLOBAL_EVENT_QUEUE.put(js_code)
 
-    def create_file_dialog(self, dialog_type=0, directory="", allow_multiple=False, save_filename="", file_types=()):
-        if str(dialog_type).lower() == "folder" or dialog_type == 10 or "FOLDER" in str(dialog_type):
+    def create_file_dialog(self, dialog_type=FileDialog.OPEN, directory="", allow_multiple=False, save_filename="", file_types=()):
+        if dialog_type == FileDialog.FOLDER or str(dialog_type).lower() == "folder" or "FOLDER" in str(dialog_type):
             return pick_folder_dialog("Chọn thư mục WWMI")
         filter_str = "|".join(file_types) if file_types else "Tất cả (*.*)|*.*"
         return pick_files_dialog("Chọn tệp tin", filter_str=filter_str, multi=allow_multiple)
@@ -1607,7 +1613,7 @@ class ResonaModAPI:
 
     def choose_wwmi_folder(self):
         try:
-            chosen = self._window.create_file_dialog(webview.FileDialog.FOLDER)
+            chosen = self._window.create_file_dialog(FileDialog.FOLDER)
             if chosen and len(chosen) > 0:
                 p = chosen[0]
                 if os.path.isdir(p):
@@ -1628,7 +1634,7 @@ class ResonaModAPI:
 
     def choose_game_exe(self):
         try:
-            chosen = self._window.create_file_dialog(webview.FileDialog.OPEN, file_types=('Executable files (*.exe)', 'All files (*.*)'))
+            chosen = self._window.create_file_dialog(FileDialog.OPEN, file_types=('Executable files (*.exe)', 'All files (*.*)'))
             if chosen and len(chosen) > 0:
                 p = chosen[0]
                 if os.path.isfile(p):
@@ -1653,7 +1659,7 @@ class ResonaModAPI:
 
     def choose_and_install_local_mod(self):
         try:
-            chosen = self._window.create_file_dialog(webview.FileDialog.OPEN, allow_multiple=True, file_types=('Mod Archives (*.zip;*.rar;*.7z;*.tar;*.gz)', 'All files (*.*)'))
+            chosen = self._window.create_file_dialog(FileDialog.OPEN, allow_multiple=True, file_types=('Mod Archives (*.zip;*.rar;*.7z;*.tar;*.gz)', 'All files (*.*)'))
             if not chosen or len(chosen) == 0:
                 return {"success": False, "msg": "Chưa chọn tệp nén Mod"}
             
