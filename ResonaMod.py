@@ -132,7 +132,7 @@ if not os.path.exists(AVATARS_DIR):
     AVATARS_DIR = os.path.join(BASE_DIR, "avatars")
 APP_NAME = "ResonaMod"
 APP_VERSION = "1.0.0"
-GITHUB_REPO = "WahuVN/MewMod-WuWa"
+GITHUB_REPO = "WahuVN/ResonaMod"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 
 TOOLS_DIR = os.path.join(getattr(sys, '_MEIPASS', BASE_DIR), "tools")
@@ -149,6 +149,27 @@ if not os.path.exists(WUWA_MOD_FIXER_EXE):
 
 XXMI_EXE = os.path.join(os.environ.get("APPDATA", ""), "XXMI Launcher", "Resources", "Bin", "XXMI Launcher.exe")
 DOWNLOADS_PATH = os.path.join(os.environ.get("USERPROFILE", ""), "Downloads")
+
+
+def run_silent_cmd(cmd_args, cwd=None):
+    """Thực thi tiến trình dòng lệnh hoàn toàn ẩn cửa sổ CMD đen (Windows Silent Execution)"""
+    startupinfo = None
+    creationflags = 0
+    if sys.platform == "win32":
+        creationflags = getattr(subprocess, 'CREATE_NO_WINDOW', 0x08000000)
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = 0  # SW_HIDE
+    return subprocess.run(
+        cmd_args,
+        cwd=cwd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        errors='ignore',
+        startupinfo=startupinfo,
+        creationflags=creationflags
+    )
 
 
 SSL_CTX = ssl.create_default_context()
@@ -513,11 +534,11 @@ def extract_archive(archive_path, extract_dir, password="huihui"):
     if password:
         cmd.append(f"-p{password}")
     try:
-        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors='ignore')
+        res = run_silent_cmd(cmd)
         if res.returncode == 0:
             return True
         cmd2 = [SEVEN_ZIP_PATH, "x", archive_path, f"-o{extract_dir}", "-y"]
-        res2 = subprocess.run(cmd2, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors='ignore')
+        res2 = run_silent_cmd(cmd2)
         return res2.returncode == 0
     except Exception as e:
         print("7z Error:", e)
@@ -1432,7 +1453,7 @@ class ResonaModAPI:
                 
         self.log(f"🔧 Đang chạy Sửa Lỗi Mod ({'Khôi phục' if rollback else 'Vá lỗi'}) trên: {os.path.basename(target_path)}...")
         try:
-            res = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors='ignore')
+            res = run_silent_cmd(args)
             log_output = (res.stderr + "\n" + res.stdout).strip()
             self.log(f"✅ HOÀN TẤT CHO [{os.path.basename(target_path)}]!")
             return {"success": True, "output": log_output}
@@ -1479,7 +1500,7 @@ class ResonaModAPI:
                             args.append("--stable-texture")
                         if rendering33:
                             args.append("--rendering-33")
-                        subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors='ignore')
+                        run_silent_cmd(args)
                         count += 1
                         
         self.log(f"🎉 HOÀN TẤT! Đã sửa và tối ưu hóa {count} bản Mod cho phiên bản WuWa mới nhất.")
