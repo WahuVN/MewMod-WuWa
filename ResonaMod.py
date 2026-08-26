@@ -1285,15 +1285,13 @@ class ResonaModAPI:
             for f in files:
                 p = os.path.join(root, f)
                 ext = os.path.splitext(f)[1].lower()
-                if ext in ['.jpg', '.jpeg', '.png', '.webp'] and f.lower() not in [".mewmod_cover.jpg", ".jasm_cover.jpg"]:
+                if ext in ['.jpg', '.jpeg', '.png', '.webp'] and f.lower() not in [".resonamod_cover.jpg", ".mewmod_cover.jpg", ".jasm_cover.jpg"]:
                     b64 = get_image_base64_from_path(p)
                     if b64:
                         all_imgs.append({"path": p, "name": f, "base64": b64})
 
         if not os.path.exists(cover_path) and all_imgs:
             cover_path = os.path.join(full_path, ".ResonaMod_Cover.jpg")
-        if not os.path.exists(cover_path):
-            cover_path = os.path.join(full_path, ".MewMod_Cover.jpg")
             try:
                 shutil.copy2(all_imgs[0]["path"], cover_path)
             except:
@@ -1345,21 +1343,15 @@ class ResonaModAPI:
         keybinds = data.get("keybinds", [])
         
         config_path = os.path.join(full_path, ".ResonaMod_ModConfig.json")
-        if not os.path.exists(config_path):
-            config_path = os.path.join(full_path, ".MewMod_ModConfig.json")
         cfg = {}
-        if os.path.exists(config_path):
-            try:
-                with open(config_path, "r", encoding="utf-8") as f:
-                    cfg = json.load(f)
-            except:
-                pass
-        elif os.path.exists(os.path.join(full_path, ".JASM_ModConfig.json")):
-            try:
-                with open(os.path.join(full_path, ".JASM_ModConfig.json"), "r", encoding="utf-8") as f:
-                    cfg = json.load(f)
-            except:
-                pass
+        for old_cfg in [config_path, os.path.join(full_path, ".MewMod_ModConfig.json"), os.path.join(full_path, ".JASM_ModConfig.json")]:
+            if os.path.exists(old_cfg):
+                try:
+                    with open(old_cfg, "r", encoding="utf-8") as f:
+                        cfg = json.load(f)
+                    break
+                except:
+                    pass
         cfg["Author"] = author
         cfg["Note"] = note
         with open(config_path, "w", encoding="utf-8") as f:
