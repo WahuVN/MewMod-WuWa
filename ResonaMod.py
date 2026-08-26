@@ -9,23 +9,6 @@ Hệ thống quản lý, cấu hình, xử lý xung đột và tối ưu hóa b�
 
 import os
 import sys
-
-# Đảm bảo PythonNet trên Windows dùng nền tảng .NET Framework (netfx) có sẵn trên mọi máy Windows 10/11
-if sys.platform == "win32":
-    os.environ["PYTHONNET_RUNTIME"] = "netfx"
-    try:
-        import pythonnet
-        if not getattr(pythonnet, "_LOADED", False):
-            try:
-                pythonnet.load("netfx")
-            except Exception:
-                try:
-                    pythonnet.load()
-                except Exception:
-                    pass
-    except Exception:
-        pass
-
 import io
 import re
 import json
@@ -38,9 +21,11 @@ import webbrowser
 import urllib.request
 import urllib.parse
 import ssl
+import queue
+import socket
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from PIL import Image, ImageOps, ImageDraw
-import webview
 
 # ĐƯỜNG DẪN HỆ THỐNG GOM TẬP TRUNG TỰ ĐỘNG NHẬN DIỆN
 if getattr(sys, 'frozen', False):
@@ -50,6 +35,55 @@ else:
 
 CACHE_DIR = os.path.join(BASE_DIR, ".cache", "thumbnails")
 os.makedirs(CACHE_DIR, exist_ok=True)
+
+GLOBAL_EVENT_QUEUE = queue.Queue()
+
+
+def pick_folder_dialog(title="Chọn thư mục"):
+    ps_cmd = f'''
+Add-Type -AssemblyName System.Windows.Forms
+$f = New-Object System.Windows.Forms.FolderBrowserDialog
+$f.Description = '{title}'
+$f.ShowNewFolderButton = $true
+if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{
+    Write-Output $f.SelectedPath
+}}
+'''
+    res = subprocess.run(['powershell', '-NoProfile', '-Command', ps_cmd], stdout=subprocess.PIPE, text=True, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0x08000000))
+    out = res.stdout.strip()
+    return (out,) if out else ()
+
+
+def pick_files_dialog(title="Chọn tệp tin", filter_str="Tất cả (*.*)|*.*", multi=False):
+    multi_flag = "$true" if multi else "$false"
+    ps_cmd = f'''
+Add-Type -AssemblyName System.Windows.Forms
+$f = New-Object System.Windows.Forms.OpenFileDialog
+$f.Title = '{title}'
+$f.Filter = '{filter_str}'
+$f.Multiselect = {multi_flag}
+if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{
+    $f.FileNames | ForEach-Object {{ Write-Output $_ }}
+}}
+'''
+    res = subprocess.run(['powershell', '-NoProfile', '-Command', ps_cmd], stdout=subprocess.PIPE, text=True, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0x08000000))
+    lines = [l.strip() for l in res.stdout.strip().splitlines() if l.strip()]
+    return tuple(lines)
+
+
+class WindowProxy:
+    def __init__(self):
+        pass
+
+    def evaluate_js(self, js_code):
+        GLOBAL_EVENT_QUEUE.put(js_code)
+
+    def create_file_dialog(self, dialog_type=0, directory="", allow_multiple=False, save_filename="", file_types=()):
+        if str(dialog_type).lower() == "folder" or dialog_type == 10 or "FOLDER" in str(dialog_type):
+            return pick_folder_dialog("Chọn thư mục WWMI")
+        filter_str = "|".join(file_types) if file_types else "Tất cả (*.*)|*.*"
+        return pick_files_dialog("Chọn tệp tin", filter_str=filter_str, multi=allow_multiple)
+
 
 CONFIG_FILE = os.path.join(BASE_DIR, "resonamod_config.json")
 OLD_CONFIG_FILE = os.path.join(BASE_DIR, "mewmod_config.json")
@@ -3777,6 +3811,49 @@ HTML_TEMPLATE = """
   </div>
 
 <script>
+  // Native bridge to Local Python Server
+  window.pywebview = {
+    api: new Proxy({}, {
+      get(target, prop) {
+        return async function(...args) {
+          try {
+            const res = await fetch('/api/' + prop, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(args)
+            });
+            return await res.json();
+          } catch(e) {
+            console.error("API error on " + prop + ":", e);
+            return null;
+          }
+        }
+      }
+    })
+  };
+
+  // Real-time EventSource connection for evaluate_js pushes
+  try {
+    const evtSource = new EventSource('/events');
+    evtSource.onmessage = function(e) {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'eval' && msg.code) {
+          eval(msg.code);
+        }
+      } catch(err) {
+        console.error("SSE eval error:", err);
+      }
+    };
+  } catch(e) {}
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      window.dispatchEvent(new Event('pywebviewready'));
+      if (typeof initApp === 'function') initApp();
+    }, 50);
+  });
+
   function safeGetStorage(key, defVal = '') {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -4963,20 +5040,163 @@ HTML_TEMPLATE = """
 </html>
 """
 
+class ResonaServerHandler(BaseHTTPRequestHandler):
+    def log_message(self, format, *args):
+        pass  # Tắt log HTTP mặc định để giữ console sạch sẽ
+
+    def do_GET(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path in ('/', '/index.html'):
+            rendered = HTML_TEMPLATE.replace("{APP_LOGO_B64}", APP_LOGO_B64).replace("{INITIAL_CHARACTERS_DATA}", INITIAL_CHARACTERS_JSON).replace("{APP_VERSION}", APP_VERSION)
+            data = rendered.encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.send_header('Content-Length', str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+        elif parsed.path == '/events':
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/event-stream; charset=utf-8')
+            self.send_header('Cache-Control', 'no-cache')
+            self.send_header('Connection', 'keep-alive')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+
+            try:
+                self.wfile.write(b": connected\n\n")
+                self.wfile.flush()
+            except:
+                return
+
+            while True:
+                try:
+                    js_code = GLOBAL_EVENT_QUEUE.get(timeout=15)
+                    payload = json.dumps({"type": "eval", "code": js_code})
+                    self.wfile.write(f"data: {payload}\n\n".encode('utf-8'))
+                    self.wfile.flush()
+                except queue.Empty:
+                    try:
+                        self.wfile.write(b": keepalive\n\n")
+                        self.wfile.flush()
+                    except:
+                        break
+                except (BrokenPipeError, ConnectionResetError):
+                    break
+        elif parsed.path == '/api/ping':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(b'{"ok": true}')
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+    def do_POST(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path.startswith('/api/'):
+            method_name = parsed.path[len('/api/'):]
+            length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(length).decode('utf-8') if length > 0 else "[]"
+            try:
+                args = json.loads(body) if body else []
+            except:
+                args = []
+
+            api_instance = getattr(self.server, 'api_instance', None)
+            res = None
+            if api_instance and hasattr(api_instance, method_name):
+                func = getattr(api_instance, method_name)
+                try:
+                    if isinstance(args, list):
+                        res = func(*args)
+                    elif isinstance(args, dict):
+                        res = func(**args)
+                    else:
+                        res = func(args)
+                except Exception as e:
+                    print(f"API Error [{method_name}]:", e)
+                    res = {"success": False, "error": str(e)}
+            else:
+                res = {"success": False, "error": f"Method {method_name} not found"}
+
+            resp_data = json.dumps(res, ensure_ascii=False).encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(resp_data)))
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(resp_data)
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+
+def find_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('127.0.0.1', 0))
+        return s.getsockname()[1]
+
+
+def launch_edge_app(url, width=1320, height=880):
+    edge_paths = [
+        os.path.expandvars(r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"),
+        os.path.expandvars(r"%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"),
+        os.path.expandvars(r"%LocalAppData%\Microsoft\Edge\Application\msedge.exe"),
+        os.path.expandvars(r"%ProgramFiles%\Google\Chrome\Application\chrome.exe"),
+        os.path.expandvars(r"%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"),
+        os.path.expandvars(r"%LocalAppData%\Google\Chrome\Application\chrome.exe"),
+    ]
+    app_exe = None
+    for p in edge_paths:
+        if os.path.isfile(p):
+            app_exe = p
+            break
+
+    profile_dir = os.path.join(os.environ.get("TEMP", os.path.expanduser("~")), "ResonaMod_Profile")
+    os.makedirs(profile_dir, exist_ok=True)
+
+    if app_exe:
+        cmd = [
+            app_exe,
+            f"--app={url}",
+            f"--window-size={width},{height}",
+            f"--user-data-dir={profile_dir}",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--disable-background-mode",
+            "--disable-extensions"
+        ]
+        return subprocess.Popen(cmd)
+    else:
+        webbrowser.open(url)
+        return None
+
+
 def main():
     api = ResonaModAPI()
-    rendered_html = HTML_TEMPLATE.replace("{APP_LOGO_B64}", APP_LOGO_B64).replace("{INITIAL_CHARACTERS_DATA}", INITIAL_CHARACTERS_JSON).replace("{APP_VERSION}", APP_VERSION)
-    window = webview.create_window(
-        title=f"✨ {APP_NAME} Studio v{APP_VERSION} - Trình Quản Lý & Cấu Hình Mod Skin",
-        html=rendered_html,
-        js_api=api,
-        width=1320,
-        height=880,
-        min_size=(1120, 720),
-        background_color='#07090e'
-    )
-    api.set_window(window)
-    webview.start(debug=False)
+    win_proxy = WindowProxy()
+    api.set_window(win_proxy)
+
+    port = find_free_port()
+    server = ThreadingHTTPServer(('127.0.0.1', port), ResonaServerHandler)
+    server.api_instance = api
+
+    server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+    server_thread.start()
+
+    app_url = f"http://127.0.0.1:{port}"
+    print(f"✨ ResonaMod Studio v{APP_VERSION} đang chạy tại: {app_url}")
+
+    proc = launch_edge_app(app_url, width=1320, height=880)
+    if proc:
+        proc.wait()
+    else:
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass
+
 
 if __name__ == "__main__":
     main()

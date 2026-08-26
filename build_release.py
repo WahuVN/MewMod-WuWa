@@ -27,9 +27,6 @@ cmd = [
     "--onedir",
     "--windowed",
     "--name", "ResonaMod",
-    "--collect-all", "pythonnet",
-    "--collect-all", "clr_loader",
-    "--collect-all", "webview",
     "--add-data", f"{AVATARS_DIR};avatars",
 ]
 
