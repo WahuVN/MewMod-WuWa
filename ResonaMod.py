@@ -56,6 +56,8 @@ import urllib.parse
 import ssl
 import queue
 import socket
+import tempfile
+import stat
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from PIL import Image, ImageOps, ImageDraw
