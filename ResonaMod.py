@@ -3584,6 +3584,9 @@ HTML_TEMPLATE = """
       </div>
 
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; padding-top: 10px; border-top: 1px solid var(--border-subtle);">
+        <button class="btn btn-secondary" onclick="window.pywebview.api.open_external_url('https://github.com/WahuVN/Viet-Hoa-WuWa')" title="Xem bản Mod Việt Hóa Wuthering Waves của WahuVN">
+          <span>🇻🇳 Mod Việt Hóa</span>
+        </button>
         <button class="btn btn-secondary" onclick="checkAppUpdate(false)">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           <span>Kiểm Tra Cập Nhật</span>

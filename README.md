@@ -69,6 +69,11 @@ ResonaMod/
 
 ---
 
+## 🌟 Dự án liên quan
+* 🇻🇳 **[Viet-Hoa-WuWa](https://github.com/WahuVN/Viet-Hoa-WuWa)**: Bản Mod Việt Hóa Wuthering Waves chất lượng cao dành cho cộng đồng người chơi Việt Nam.
+
+---
+
 ## 💬 Cộng đồng & Hỗ trợ
 * **Discord**: [Tham gia Server Discord (Giao lưu & Hỗ trợ Mod)](https://discord.gg/tuRCj47sy)
 
