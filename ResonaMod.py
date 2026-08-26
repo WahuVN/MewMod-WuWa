@@ -1001,8 +1001,8 @@ class ResonaModAPI:
                 img_url = ""
                 if medias:
                     img_base = medias[0].get("_sBaseUrl", "")
-                    img_file = medias[0].get("_sFile", "")
-                    img_url = f"{img_base}/{img_file}"
+                    img_file = medias[0].get("_sFile530") or medias[0].get("_sFile220") or medias[0].get("_sFile", "")
+                    img_url = f"{img_base}/{img_file}" if (img_base and img_file) else ""
                     
                 items.append({
                     "id": str(mod_id),
@@ -4701,6 +4701,17 @@ HTML_TEMPLATE = """
     if (target >= 1) loadMods(target);
   }
 
+  const FALLBACK_CARD_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='215' height='255' viewBox='0 0 215 255'%3E%3Crect width='100%25' height='100%25' fill='%230b0f19'/%3E%3Ctext x='50%25' y='48%25' dominant-baseline='middle' text-anchor='middle' fill='%2338bdf8' font-family='sans-serif' font-size='15' font-weight='800'%3ERESONAMOD%3C/text%3E%3Ctext x='50%25' y='58%25' dominant-baseline='middle' text-anchor='middle' fill='%2364748b' font-family='sans-serif' font-size='10' font-weight='600'%3EPreview Image%3C/text%3E%3C/svg%3E";
+
+  function handleCardImgError(el, origUrl) {
+    if (!el.dataset.proxied && origUrl && origUrl.startsWith('http')) {
+      el.dataset.proxied = 'true';
+      el.src = '/api/image_proxy?url=' + encodeURIComponent(origUrl);
+    } else {
+      el.src = FALLBACK_CARD_IMG;
+    }
+  }
+
   function renderGrid() {
     const grid = document.getElementById('mod-grid');
     grid.innerHTML = '';
@@ -4711,9 +4722,10 @@ HTML_TEMPLATE = """
       const card = document.createElement('div');
       card.className = 'mod-card';
       card.id = `mod-card-${idx}`;
+      const safeImgUrl = (m.img_url || '').replace(/'/g, "\\'");
       card.innerHTML = `
         <div class="card-img-wrap ${isBlurred ? 'blurred' : ''}" onclick='handleCardImgClick(${JSON.stringify(m)}, ${JSON.stringify(modKey)}, ${idx})' title="${isBlurred ? 'Bấm để mở xem ảnh này' : 'Bấm để phóng to xem ảnh'}">
-          <img src="${m.img_url || 'https://via.placeholder.com/215x255'}" class="card-img" loading="lazy" onerror="this.src='https://via.placeholder.com/215x255?text=WuWa+Mod'">
+          <img src="${m.img_url || FALLBACK_CARD_IMG}" class="card-img" loading="lazy" onerror="handleCardImgError(this, '${safeImgUrl}')">
           <div class="blur-overlay">
             <span class="blur-overlay-icon">🙈</span>
             <span class="blur-overlay-text">Đã Làm Mờ</span>
@@ -5440,6 +5452,28 @@ class ResonaServerHandler(BaseHTTPRequestHandler):
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
             self.wfile.write(b'{"ok": true}')
+        elif parsed.path == '/api/image_proxy':
+            query_params = urllib.parse.parse_qs(parsed.query)
+            target_url = query_params.get('url', [''])[0]
+            if not target_url or not target_url.startswith('http'):
+                self.send_response(400)
+                self.end_headers()
+                return
+            try:
+                req = urllib.request.Request(target_url, headers=HEADERS)
+                with urllib.request.urlopen(req, context=SSL_CTX, timeout=8) as resp:
+                    data = resp.read()
+                    content_type = resp.headers.get('Content-Type', 'image/jpeg')
+                    self.send_response(200)
+                    self.send_header('Content-Type', content_type)
+                    self.send_header('Content-Length', str(len(data)))
+                    self.send_header('Cache-Control', 'public, max-age=86400')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    self.wfile.write(data)
+            except:
+                self.send_response(500)
+                self.end_headers()
         elif parsed.path == '/api/shutdown':
             LAST_HEARTBEAT = 0  # Force immediate shutdown
             self.send_response(200)
