@@ -1,8 +1,8 @@
-# MewMod WuWa
+# ResonaMod
 
 <p align="center">
-  <img src="./app_icon.png" width="110" height="110" alt="MewMod WuWa Logo" style="border-radius: 16px;"><br><br>
-  <b>Ứng dụng quản lý và cài đặt Mod Skin cho Wuthering Waves (鸣潮)</b>
+  <img src="./app_icon.png" width="110" height="110" alt="ResonaMod Logo" style="border-radius: 16px;"><br><br>
+  <b>Tool quản lý và cài đặt Mod Skin cho Wuthering Waves (鸣潮)</b>
 </p>
 
 <p align="center">
@@ -14,56 +14,61 @@
 
 ## 📌 Giới thiệu
 
-**MewMod WuWa** là công cụ giúp bạn dễ dàng cài đặt, quản lý và tải các bản Mod Skin cho game **Wuthering Waves**. Ứng dụng kết nối trực tiếp với WWMI, giúp bạn bật/tắt mod nhanh chóng và tự động sửa các lỗi mod thường gặp.
+**ResonaMod** là công cụ giúp bạn tải, cài đặt và quản lý mod skin cho game **Wuthering Waves**. Tool kết nối với WWMI / 3DMigoto, giúp bạn bật/tắt mod nhanh, đổi phím tắt và sửa lỗi mod sau mỗi lần game cập nhật.
 
 ---
 
 ## ✨ Tính năng chính
 
-* 🛡️ **Bật/Tắt Mod thông minh**: Mỗi nhân vật khi bật 1 skin sẽ tự động tắt các skin khác để tránh bị lỗi đè model trong game.
-* 🔧 **Tự động sửa lỗi Mod**: Tích hợp sẵn công cụ sửa lỗi mất bộ phận, tàng hình, nhấp nháy texture sau mỗi lần game cập nhật.
-* 🌐 **Tải Mod trực tuyến**: Tìm và tải mod trực tiếp từ GameBanana, Huihui168, NexusMods hoặc dán link tải nhanh.
-* ⌨️ **Chỉnh phím tắt phụ kiện**: Đổi phím tắt bật/tắt váy, tất, tóc, phụ kiện (`mod.ini`) ngay trên giao diện mà không cần sửa file thủ công.
-* 🖼️ **Xem trước ảnh Mod**: Xem ảnh phóng to, album ảnh đầy đủ trước khi quyết định tải mod.
-* 🚀 **Tự động cập nhật**: Tự động thông báo khi có phiên bản mới trên GitHub và tải về chỉ với 1 cú nhấp chuột.
+* 🛡️ **Bật/Tắt Mod**: Bật 1 skin sẽ tự động tắt các skin khác của nhân vật đó để tránh lỗi đè hình.
+* 🔧 **Sửa lỗi Mod**: Tự động sửa lỗi mất hình, tàng hình, nhấp nháy skin khi game update.
+* 🌐 **Tải Mod trực tiếp**: Duyệt và tải mod từ GameBanana, Huihui168, NexusMods hoặc dán link tải nhanh.
+* ⌨️ **Đổi phím tắt phụ kiện**: Chỉnh phím tắt bật/tắt váy, tất, tóc, phụ kiện ngay trên app.
+* 🖼️ **Xem ảnh Mod**: Xem ảnh phóng to và album ảnh trước khi tải.
+* 🚀 **Cắm là chạy**: Không cần cài Python hay cài đặt gì thêm, tải về mở là dùng được luôn.
 
 ---
 
 ## 🚀 Hướng dẫn sử dụng
 
-### Dành cho người dùng thông thường (Khuyên dùng)
-1. Vào mục **[Releases](https://github.com/WahuVN/MewMod-WuWa/releases)** và tải file **`MewModWuWa-v1.0.0-Standalone.zip`**.
-2. Giải nén vào thư mục bất kỳ.
-3. Mở file **`MewModWuWa.exe`** để sử dụng ngay (không cần cài Python).
+### Cho người dùng tải về chơi
+1. Tải file **`ResonaMod-v1.0.0-Standalone.zip`** từ mục **[Releases](https://github.com/WahuVN/MewMod-WuWa/releases)**.
+2. Giải nén ra thư mục bất kỳ (hoặc bỏ vào thư mục `WWMI`).
+3. Mở file **`ResonaMod.exe`** là xong.
 
-### Dành cho lập trình viên (Chạy bằng Python)
+### Cho ai muốn chạy bằng code Python
 ```bash
-# Cài đặt thư viện
 pip install -r requirements.txt
-
-# Khởi chạy ứng dụng
-pythonw MewModWuWa.py
+pythonw ResonaMod.py
 ```
 
 ---
 
-## 📂 Thư mục dự án
+## 📂 Các file trong thư mục
 
 ```text
-MewMod-WuWa/
+ResonaMod/
 ├── avatars/                 # Ảnh icon các nhân vật
 ├── tools/                   # Công cụ 7-Zip và WuWa Mod Fixer
-├── 1_Mo_MewMod_WuWa.bat     # File mở nhanh ứng dụng
-├── 2_Mo_Thu_Muc_Mods.bat    # File mở nhanh thư mục Mods của game
-├── MewModWuWa.py            # File mã nguồn chính
-├── build_release.py         # Script đóng gói thành file .exe
-├── requirements.txt         # Thư viện Python cần thiết
+├── 1_Mo_ResonaMod.bat       # Mở nhanh tool
+├── 2_Mo_Thu_Muc_Mods.bat    # Mở thư mục Mods của game
+├── ResonaMod.py             # File code chính
+├── build_release.py         # File đóng gói thành .exe
+├── requirements.txt         # Thư viện Python
 └── README.md                # Hướng dẫn sử dụng
 ```
 
 ---
 
+## 🙏 Nguồn công cụ & Tham khảo (Credits)
+
+* **[WuWa Mod Fixer](https://github.com/Moonholder)** (bởi **Moonholder**): Công cụ tự động sửa lỗi vertex hash, LOD bias, phục hồi mesh cho các bản cập nhật WuWa.
+* **[3DMigoto & WWMI / XXMI](https://github.com/SilentNightSound/XXMI)** (bởi **Chiri**, **bo3b**, **SilentNightSound**, **Spectrum** & XXMI Team): Bộ nạp chèn mod skin vào game Wuthering Waves.
+* **[GameBanana](https://gamebanana.com/games/20358)**, **[Huihui168](https://www.huihui168.com/)**, **[NexusMods](https://www.nexusmods.com/wutheringwaves)**: Nguồn chia sẻ mod skin của cộng đồng modder.
+
+---
+
 ## 👤 Tác giả
-* Phát triển bởi **WahuVN / MewMod Team**.
-* Miễn phí phi lợi nhuận cho cộng đồng Wuthering Waves.
+* Phát triển bởi **WahuVN / ResonaMod**.
+* Miễn phí cho cộng đồng Wuthering Waves.
 

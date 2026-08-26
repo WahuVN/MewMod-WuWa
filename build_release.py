@@ -3,7 +3,7 @@ from PIL import Image
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-print("=== BAT DAU DONG GOI BUILD BAN STANDALONE MEWMOD WUWA ===")
+print("=== BAT DAU DONG GOI BUILD BAN STANDALONE RESONAMOD STUDIO ===")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 AVATARS_DIR = os.path.join(BASE_DIR, "avatars")
@@ -26,7 +26,7 @@ cmd = [
     "--noconfirm",
     "--onedir",
     "--windowed",
-    "--name", "MewModWuWa",
+    "--name", "ResonaMod",
     "--add-data", f"{AVATARS_DIR};avatars",
 ]
 
@@ -43,13 +43,24 @@ if os.path.exists(TOOLS_DIR):
 if os.path.exists(ICON_ICO):
     cmd.extend(["--icon", ICON_ICO])
 
-cmd.append(os.path.join(BASE_DIR, "MewModWuWa.py"))
+cmd.append(os.path.join(BASE_DIR, "ResonaMod.py"))
 
 print("Dang chay PyInstaller...")
 res = subprocess.run(cmd, cwd=BASE_DIR)
 
 if res.returncode == 0:
-    print("\n🎉 BUILD THANH CONG!")
-    print(f"📁 Thu muc phat hanh: {os.path.join(BASE_DIR, 'dist', 'MewModWuWa')}")
+    dist_dir = os.path.join(BASE_DIR, 'dist', 'ResonaMod')
+    zip_path = os.path.join(BASE_DIR, 'dist', 'ResonaMod-v1.0.0-Standalone.zip')
+    print("\n📦 Dang nen thu muc phat hanh thanh file .zip...")
+    try:
+        shutil.make_archive(zip_path.replace('.zip', ''), 'zip', os.path.join(BASE_DIR, 'dist'), 'ResonaMod')
+        zip_size_mb = os.path.getsize(zip_path) / (1024 * 1024)
+        print(f"✅ Da tao ban .zip phat hanh: {zip_path} ({zip_size_mb:.1f} MB)")
+    except Exception as e:
+        print(f"⚠️ Khong the tao file zip: {e}")
+
+    print("\n🎉 BUILD & DONG GOI HOAN TAT!")
+    print(f"📁 Thu muc chay truc tiep: {dist_dir}")
+    print(f"📦 File zip de chia se:    {zip_path}")
 else:
     print(f"\n❌ Loi khi dong goi: {res.returncode}")
