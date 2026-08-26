@@ -662,8 +662,15 @@ def optimize_mod_structure(extracted_root, base_mod_name, fallback_folder="", on
         except:
             ini_content = ""
 
-    char_folder_name = detect_character([base_mod_name, os.path.basename(source_dir)], ini_content)
-    if char_folder_name == "others" and fallback_folder and fallback_folder != "all":
+    # Gom toàn bộ manh mối: Tiêu đề mod, thư mục đang chọn, tên file zip, thư mục con giải nén
+    all_hints = [desc, fallback_folder, base_mod_name, os.path.basename(source_dir)]
+    for r, dirs, files in os.walk(extracted_root):
+        all_hints.extend(dirs[:5])
+        all_hints.extend([os.path.splitext(f)[0] for f in files if f.lower().endswith(('.ini', '.pak', '.ucas', '.utoc'))])
+        break
+
+    char_folder_name = detect_character(all_hints, ini_content)
+    if (char_folder_name == "others" or not char_folder_name) and fallback_folder and fallback_folder != "all":
         char_folder_name = fallback_folder
     char_dest_path = os.path.join(WWMI_CHAR_PATH, char_folder_name)
     os.makedirs(char_dest_path, exist_ok=True)
@@ -1150,19 +1157,31 @@ class ResonaModAPI:
         context_folder = mod.get("context_folder", "")
         img_url = mod.get("img_url", "")
         author = mod.get("author", "Modder")
+        task_id = f"dl_{int(time.time()*1000)}_{uuid.uuid4().hex[:4]}"
         
         with self._dl_lock:
             is_busy = (self._dl_worker_thread is not None and self._dl_worker_thread.is_alive())
-            self._dl_queue.put((source, mod_id, title, link, context_folder, img_url, author))
+            self._dl_queue.put((task_id, source, mod_id, title, link, context_folder, img_url, author))
             qsize = self._dl_queue.qsize()
+            
+            task_info = {
+                "id": task_id,
+                "title": title,
+                "author": author,
+                "source": source,
+                "img_url": img_url,
+                "status": "downloading" if not is_busy else "queued",
+                "queue_pos": qsize
+            }
+            if self._window:
+                self._window.evaluate_js(f"window.onDownloadTaskAdded({json.dumps(task_info)});")
+            
             if not is_busy:
                 self._dl_worker_thread = threading.Thread(target=self._process_download_queue, daemon=True)
                 self._dl_worker_thread.start()
             else:
                 self.log(f"[Hàng Đợi Tải] Đã thêm [{title}] vào hàng đợi tải (Vị trí: #{qsize}).")
-                if self._window:
-                    self._window.evaluate_js(f"window.onModQueued('{title.replace(chr(39), '')}', {qsize});")
-        return {"started": True, "queued": is_busy, "queue_size": qsize}
+        return {"started": True, "task_id": task_id, "queued": is_busy, "queue_size": qsize}
 
     def _process_download_queue(self):
         while True:
@@ -1171,21 +1190,21 @@ class ResonaModAPI:
             except queue.Empty:
                 break
 
-            source, mod_id, title, link, context_folder, img_url, author = item
+            task_id, source, mod_id, title, link, context_folder, img_url, author = item
             remaining = self._dl_queue.qsize()
             try:
-                self._download_worker(source, mod_id, title, link, context_folder, img_url, author, remaining)
+                self._download_worker(task_id, source, mod_id, title, link, context_folder, img_url, author, remaining)
             except Exception as e:
                 self.log(f"[Lỗi Tải Mod] {e}")
                 if self._window:
-                    self._window.evaluate_js(f"window.finishDownloadError('{str(e).replace(chr(39), '')}');")
+                    self._window.evaluate_js(f"window.onDownloadTaskError('{task_id}', '{str(e).replace(chr(39), '')}');")
             finally:
                 self._dl_queue.task_done()
 
-    def _download_worker(self, source, mod_id, title, link, context_folder="", img_url="", author="Modder", queue_remaining=0):
+    def _download_worker(self, task_id, source, mod_id, title, link, context_folder="", img_url="", author="Modder", queue_remaining=0):
         self.log(f"[Tải Xuống] Bắt đầu tải bản mod: {title}...")
         if self._window:
-            self._window.evaluate_js(f"window.showDownloadWidget('{title.replace(chr(39), '')}', {queue_remaining});")
+            self._window.evaluate_js(f"window.onDownloadTaskStarted('{task_id}', '{title.replace(chr(39), '')}');")
         
         task_uid = uuid.uuid4().hex[:8]
         temp_file = ""
@@ -1195,7 +1214,7 @@ class ResonaModAPI:
             def _prog(pct, cur_mb, tot_mb, speed_mb):
                 pct_100 = round(pct * 100, 1)
                 if self._window:
-                    self._window.evaluate_js(f"window.updateDownloadProgress({pct_100}, '{cur_mb:.2f}', '{tot_mb:.2f}', '{speed_mb:.2f}', {queue_remaining});")
+                    self._window.evaluate_js(f"window.onDownloadTaskProgress('{task_id}', {pct_100}, '{cur_mb:.2f}', '{tot_mb:.2f}', '{speed_mb:.2f}');")
 
             if source == "gamebanana":
                 profile_url = f"https://gamebanana.com/apiv11/Mod/{mod_id}/ProfilePage"
@@ -1213,7 +1232,7 @@ class ResonaModAPI:
                 preview_media = data.get("_aPreviewMedia", {}).get("_aImages", [])
                 if preview_media and not img_url:
                     base_u = preview_media[0].get("_sBaseUrl", "")
-                    file_u = preview_media[0].get("_sFile", "")
+                    file_u = preview_media[0].get("_sFile530") or preview_media[0].get("_sFile", "")
                     if base_u and file_u:
                         img_url = f"{base_u}/{file_u}"
                 
@@ -1239,7 +1258,7 @@ class ResonaModAPI:
                 webbrowser.open(link)
                 self.log(f"[NexusMods] Đã mở liên kết trình duyệt: {link}")
                 if self._window:
-                    self._window.evaluate_js(f"window.finishDownloadSuccess('{title.replace(chr(39), '')}', 'others', {queue_remaining});")
+                    self._window.evaluate_js(f"window.onDownloadTaskComplete('{task_id}', '{title.replace(chr(39), '')}', 'others');")
                 return
             else:
                 req = urllib.request.Request(link, headers=HEADERS)
@@ -1287,11 +1306,11 @@ class ResonaModAPI:
 
             self.log(f"[Cài Đặt] Đã cài đặt thành công: [{clean_n}] -> Thư mục: {char_f.upper()}")
             if self._window:
-                self._window.evaluate_js(f"window.finishDownloadSuccess('{clean_n.replace(chr(39), '')}', '{char_f}', {queue_remaining});")
+                self._window.evaluate_js(f"window.onDownloadTaskComplete('{task_id}', '{clean_n.replace(chr(39), '')}', '{char_f}');")
         except Exception as e:
             self.log(f"[Lỗi Tải Mod] {e}")
             if self._window:
-                self._window.evaluate_js(f"window.finishDownloadError('{str(e).replace(chr(39), '')}');")
+                self._window.evaluate_js(f"window.onDownloadTaskError('{task_id}', '{str(e).replace(chr(39), '')}');")
         finally:
             if temp_ext and os.path.exists(temp_ext):
                 shutil.rmtree(temp_ext, ignore_errors=True)
@@ -1608,10 +1627,15 @@ class ResonaModAPI:
 
     def open_folder(self, path=""):
         target = path if path else WWMI_CHAR_PATH
-        if os.path.exists(target):
-            os.startfile(target)
+        target_abs = os.path.abspath(target)
+        if os.path.exists(target_abs):
+            if os.path.isfile(target_abs):
+                subprocess.Popen(f'explorer.exe /select,"{target_abs}"')
+            else:
+                subprocess.Popen(f'explorer.exe "{target_abs}"')
         else:
-            os.startfile(WWMI_PATH)
+            if os.path.exists(WWMI_PATH):
+                subprocess.Popen(f'explorer.exe "{os.path.abspath(WWMI_PATH)}"')
 
     def run_advanced_fix(self, target_path, derived_hashes=False, stable_texture=False, rendering33=False, rollback=False):
         if not os.path.exists(WUWA_MOD_FIXER_EXE):
@@ -3220,113 +3244,116 @@ HTML_TEMPLATE = """
     line-height: 1.45;
   }
 
-  /* NON-BLOCKING COMPACT FLOATING DOWNLOAD WIDGET */
-  .corner-dl-widget {
+  /* =========================================================================
+     MULTI-TASK DOWNLOAD QUEUE TRAY
+     ========================================================================= */
+  .dl-tray {
     position: fixed;
-    bottom: 24px;
-    right: 24px;
-    width: 310px;
-    background: rgba(11, 15, 25, 0.94);
+    bottom: 20px;
+    right: 20px;
+    width: 330px;
+    background: rgba(11, 15, 25, 0.96);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(56, 189, 248, 0.35);
     border-radius: 12px;
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.15);
-    padding: 12px 14px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.85), 0 0 20px rgba(56, 189, 248, 0.15);
     z-index: 9999;
     display: none;
     flex-direction: column;
-    animation: slideInUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    overflow: hidden;
+    animation: slideInUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     box-sizing: border-box;
   }
-  .corner-dl-widget.active { display: flex; }
-  .corner-dl-widget.success {
-    border-color: rgba(16, 185, 129, 0.6);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.75), 0 0 20px rgba(16, 185, 129, 0.25);
-  }
-  .corner-dl-widget.error {
-    border-color: rgba(244, 63, 94, 0.6);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.75), 0 0 20px rgba(244, 63, 94, 0.25);
-  }
-  .corner-dl-header {
+  .dl-tray.active { display: flex; }
+  .dl-tray.collapsed .dl-tray-list { display: none; }
+  .dl-tray-header {
+    padding: 10px 14px;
+    background: rgba(15, 23, 42, 0.85);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+  .dl-tray-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 11px;
+    padding: 3px 6px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+    line-height: 1;
+  }
+  .dl-tray-btn:hover { color: #fff; background: rgba(255,255,255,0.12); }
+  .dl-tray-list {
+    max-height: 260px;
+    overflow-y: auto;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
     gap: 6px;
   }
-  .corner-dl-title-wrap {
+  .dl-task-card {
+    background: rgba(30, 41, 59, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 8px 10px;
     display: flex;
-    align-items: center;
-    gap: 8px;
-    overflow: hidden;
-    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    transition: all 0.2s ease;
   }
-  .corner-dl-spinner {
-    width: 14px;
-    height: 14px;
-    border: 2px solid rgba(56, 189, 248, 0.2);
-    border-top-color: #38bdf8;
-    border-radius: 50%;
-    animation: spin 0.75s linear infinite;
-    flex-shrink: 0;
+  .dl-task-card.active {
+    border-color: rgba(56, 189, 248, 0.4);
+    background: rgba(14, 165, 233, 0.08);
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .corner-dl-title {
-    font-size: 12px;
+  .dl-task-card.done {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.06);
+  }
+  .dl-task-card.error {
+    border-color: rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.06);
+  }
+  .dl-task-title {
+    font-size: 11.5px;
     font-weight: 700;
     color: #f8fafc;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .corner-dl-close {
-    background: transparent;
-    border: none;
-    color: #64748b;
-    font-size: 13px;
-    cursor: pointer;
-    padding: 2px 6px;
-    border-radius: 4px;
-    transition: all 0.15s ease;
-    line-height: 1;
-  }
-  .corner-dl-close:hover { color: #ffffff; background: rgba(255, 255, 255, 0.1); }
-  .corner-dl-subtitle {
-    font-size: 10.5px;
-    color: #94a3b8;
-    margin-top: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .corner-dl-footer {
+  .dl-task-status {
     display: flex;
     justify-content: space-between;
     font-size: 10px;
-    color: #64748b;
+    color: #94a3b8;
     font-family: var(--font-mono);
+  }
+  .dl-task-bar {
+    height: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 99px;
+    overflow: hidden;
     margin-top: 2px;
+  }
+  .dl-task-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #38bdf8, #0284c7);
+    transition: width 0.15s ease;
+  }
+  .dl-task-card.done .dl-task-bar-fill {
+    background: #10b981;
+    width: 100% !important;
   }
   @keyframes slideInUp {
     from { opacity: 0; transform: translateY(16px) scale(0.96); }
     to { opacity: 1; transform: translateY(0) scale(1); }
-  }
-
-  /* PROGRESS BAR */
-  .progress-wrap {
-    background: rgba(7, 9, 14, 0.8);
-    height: 7px;
-    border-radius: var(--radius-full);
-    overflow: hidden;
-    margin: 10px 0 6px;
-    border: 1px solid var(--border-subtle);
-  }
-  .progress-fill {
-    height: 100%;
-    width: 0%;
-    background: var(--gradient-primary);
-    transition: width 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
   }
 
   /* =========================================================================
@@ -4029,22 +4056,40 @@ HTML_TEMPLATE = """
     </div>
   </div>
 
-  <!-- FLOATING CORNER DOWNLOAD WIDGET (COMPACT & NON-BLOCKING) -->
-  <div class="corner-dl-widget" id="dl-widget">
-    <div class="corner-dl-header">
-      <div class="corner-dl-title-wrap">
-        <div class="corner-dl-spinner" id="dl-spinner"></div>
-        <div class="corner-dl-title" id="dl-title">Đang tải bản mod...</div>
+  <!-- CYBER CONFIRMATION MODAL -->
+  <div class="modal-overlay" id="confirm-modal" style="z-index: 10000;">
+    <div class="modal-box" style="width: 440px; border-color: rgba(239, 68, 68, 0.4); box-shadow: 0 20px 60px rgba(0,0,0,0.85), 0 0 30px rgba(239, 68, 68, 0.2);">
+      <div style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 10px;">
+        <div style="width: 34px; height: 34px; border-radius: 8px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); display: flex; align-items: center; justify-content: center; font-size: 16px;">⚠️</div>
+        <div>
+          <div style="font-size: 14px; font-weight: 700; color: #f87171;" id="confirm-modal-title">Xác Nhận Xóa Mod</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Thao tác này không thể hoàn tác</div>
+        </div>
       </div>
-      <button class="corner-dl-close" onclick="hideDownloadWidget()" title="Ẩn thông báo">✕</button>
+      <div style="padding: 20px;" id="confirm-modal-msg">
+        <!-- Dynamic message content -->
+      </div>
+      <div style="padding: 14px 20px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn-secondary" onclick="closeConfirmModal(false)">Hủy Bỏ</button>
+        <button class="btn btn-danger" id="confirm-modal-btn" onclick="closeConfirmModal(true)">🗑️ Xác Nhận Xóa</button>
+      </div>
     </div>
-    <div class="corner-dl-subtitle" id="dl-subtitle">Đang kết nối máy chủ...</div>
-    <div class="progress-wrap" style="margin: 6px 0 4px; height: 4px; border-radius: 999px;">
-      <div class="progress-fill" id="dl-bar"></div>
+  </div>
+
+  <!-- MULTI-TASK DOWNLOAD QUEUE TRAY -->
+  <div class="dl-tray" id="dl-tray">
+    <div class="dl-tray-header" onclick="toggleDlTrayCollapse()">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div class="corner-dl-spinner" id="dl-tray-main-spinner" style="width: 14px; height: 14px;"></div>
+        <span style="font-size: 12px; font-weight: 700; color: #f8fafc;" id="dl-tray-title">Đang Tải Mod (0)</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <button class="dl-tray-btn" id="dl-tray-collapse-btn" onclick="event.stopPropagation(); toggleDlTrayCollapse()" title="Thu nhỏ/Mở rộng">▼</button>
+        <button class="dl-tray-btn" onclick="event.stopPropagation(); closeAllCompletedDlTasks()" title="Đóng danh sách">✕</button>
+      </div>
     </div>
-    <div class="corner-dl-footer">
-      <span id="dl-pct">0%</span>
-      <span id="dl-speed">Đang chuẩn bị...</span>
+    <div class="dl-tray-list" id="dl-tray-list">
+      <!-- Individual Task Cards -->
     </div>
   </div>
 
@@ -5142,26 +5187,61 @@ HTML_TEMPLATE = """
     document.getElementById('insp-keybinds').innerHTML = '';
   }
 
+  /* =========================================================================
+     CYBER CONFIRMATION & ALERT MODAL
+     ========================================================================= */
+  let cyberConfirmCallback = null;
+
+  function showCyberConfirm(title, msgHtml, onConfirm, btnText = '🗑️ Xác Nhận Xóa', isDanger = true) {
+    document.getElementById('confirm-modal-title').innerText = title;
+    document.getElementById('confirm-modal-msg').innerHTML = msgHtml;
+    const btn = document.getElementById('confirm-modal-btn');
+    btn.innerHTML = btnText;
+    btn.className = isDanger ? 'btn btn-danger' : 'btn btn-primary';
+    cyberConfirmCallback = onConfirm;
+    document.getElementById('confirm-modal').className = 'modal-overlay active';
+  }
+
+  function closeConfirmModal(result) {
+    document.getElementById('confirm-modal').className = 'modal-overlay';
+    if (result && typeof cyberConfirmCallback === 'function') {
+      cyberConfirmCallback();
+    }
+    cyberConfirmCallback = null;
+  }
+
   function deleteInstalledModDirect(fullPath, modName = '') {
     const name = modName || fullPath.split(String.fromCharCode(92)).join('/').split('/').pop().replace('DISABLED_', '');
     confirmDeleteMod(fullPath, name);
   }
 
-  async function confirmDeleteMod(fullPath, modName) {
+  function confirmDeleteMod(fullPath, modName) {
     const name = modName || 'bản mod này';
-    if (!confirm(`Bạn có chắc chắn muốn XÓA VĨNH VIỄN bản mod:\n"${name}"\nkhỏi game không?\n\n(Thao tác này sẽ xóa thư mục mod và không thể khôi phục!)`)) {
-      return;
-    }
-    const res = await window.pywebview.api.delete_mod(fullPath);
-    if (res && res.success) {
-      if (currentInspectedModPath === fullPath) {
-        currentInspectedModPath = '';
-      }
-      await loadCharacters();
-      await loadInstalled(currentCharFolder);
-    } else {
-      alert('Lỗi xóa bản mod: ' + ((res && res.error) || 'Không xác định'));
-    }
+    showCyberConfirm(
+      'Xóa Vĩnh Viễn Bản Mod',
+      `<div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+         Bạn có chắc chắn muốn xóa bản mod sau khỏi game?
+         <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; padding: 10px 12px; margin-top: 10px; font-weight: 700; color: #fff; word-break: break-all;">
+           ${name}
+         </div>
+         <div style="font-size: 11px; color: #f87171; margin-top: 8px;">⚠️ Toàn bộ tệp và thư mục của bản mod này sẽ bị xóa vĩnh viễn khỏi ổ đĩa.</div>
+       </div>`,
+      async () => {
+        const res = await window.pywebview.api.delete_mod(fullPath);
+        if (res && res.success) {
+          if (currentInspectedModPath === fullPath) {
+            currentInspectedModPath = '';
+            clearInspector();
+          }
+          await loadCharacters();
+          await loadInstalled(currentCharFolder, '', true);
+        } else {
+          alert('Lỗi xóa bản mod: ' + ((res && res.error) || 'Không xác định'));
+        }
+      },
+      '🗑️ Xác Nhận Xóa',
+      true
+    );
   }
 
   function deleteCurrentInspectedMod() {
@@ -5298,32 +5378,156 @@ HTML_TEMPLATE = """
   });
 
 
-  let dlWidgetTimeout = null;
+  /* =========================================================================
+     MULTI-TASK DOWNLOAD QUEUE TRAY MANAGER
+     ========================================================================= */
+  let downloadTasks = {}; // taskId -> { id, title, author, source, img_url, status, queue_pos, pct, cur, tot, speed, char }
 
-  function hideDownloadWidget() {
-    const w = document.getElementById('dl-widget');
-    if (w) w.className = 'corner-dl-widget';
-  }
-
-  function showDownloadWidget(title = 'Đang tải bản mod...', queueRemaining = 0) {
-    if (dlWidgetTimeout) clearTimeout(dlWidgetTimeout);
-    const w = document.getElementById('dl-widget');
-    if (!w) return;
-    w.className = 'corner-dl-widget active';
-    document.getElementById('dl-title').innerText = title;
-    const queueTxt = queueRemaining > 0 ? ` (Còn ${queueRemaining} mod trong hàng đợi)` : '';
-    document.getElementById('dl-subtitle').innerText = 'Đang kết nối máy chủ...' + queueTxt;
-    document.getElementById('dl-bar').style.width = '0%';
-    document.getElementById('dl-pct').innerText = '0%';
-    document.getElementById('dl-speed').innerText = 'Đang chuẩn bị...';
-  }
-
-  function onModQueued(title, queuePos) {
-    appendLog(`[Hàng Đợi] Đã thêm [${title}] vào hàng đợi tải (Vị trí #${queuePos}).`);
-    const w = document.getElementById('dl-widget');
-    if (w && !w.classList.contains('active')) {
-      showDownloadWidget(title, queuePos - 1);
+  function renderDlTray() {
+    const tray = document.getElementById('dl-tray');
+    const list = document.getElementById('dl-tray-list');
+    if (!tray || !list) return;
+    const tasks = Object.values(downloadTasks);
+    
+    if (tasks.length === 0) {
+      tray.className = 'dl-tray';
+      return;
     }
+    
+    tray.className = 'dl-tray active' + (tray.classList.contains('collapsed') ? ' collapsed' : '');
+    
+    const activeTasks = tasks.filter(t => t.status === 'downloading' || t.status === 'queued');
+    
+    document.getElementById('dl-tray-title').innerText = `Đang Tải Mod (${activeTasks.length})`;
+    const spinner = document.getElementById('dl-tray-main-spinner');
+    if (spinner) spinner.style.display = activeTasks.length > 0 ? 'block' : 'none';
+    
+    list.innerHTML = '';
+    // Sort: downloading first, then queued, then error, then done
+    const sortedTasks = [...tasks].sort((a, b) => {
+      const order = { downloading: 0, queued: 1, error: 2, done: 3 };
+      return (order[a.status] || 0) - (order[b.status] || 0);
+    });
+
+    sortedTasks.forEach(t => {
+      const card = document.createElement('div');
+      card.className = `dl-task-card ${t.status === 'downloading' ? 'active' : (t.status === 'done' ? 'done' : (t.status === 'error' ? 'error' : ''))}`;
+      card.id = `dl-card-${t.id}`;
+      
+      let statusText = '';
+      let speedText = '';
+      if (t.status === 'queued') {
+        statusText = `⌛ Chờ tải (Vị trí #${t.queue_pos || 1})`;
+        speedText = 'Trong hàng đợi';
+      } else if (t.status === 'downloading') {
+        statusText = `⚡ Đang tải: ${t.pct || 0}%`;
+        speedText = t.speed ? `${t.speed} MB/s` : 'Kết nối...';
+      } else if (t.status === 'done') {
+        statusText = `✅ Đã cài -> ${(t.char || 'Mod').toUpperCase()}`;
+        speedText = 'Hoàn tất';
+      } else if (t.status === 'error') {
+        statusText = `❌ Thất bại`;
+        speedText = t.error || 'Lỗi mạng';
+      }
+
+      card.innerHTML = `
+        <div class="dl-task-title" title="${(t.title || '').replace(/"/g, '&quot;')}">${t.title || 'Bản Mod'}</div>
+        <div class="dl-task-status">
+          <span style="color: ${t.status === 'done' ? '#10b981' : (t.status === 'error' ? '#ef4444' : '#38bdf8')}; font-weight: 600;">${statusText}</span>
+          <span>${speedText}</span>
+        </div>
+        <div class="dl-task-bar">
+          <div class="dl-task-bar-fill" style="width: ${t.status === 'done' ? 100 : (t.pct || 0)}%;"></div>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  }
+
+  function toggleDlTrayCollapse() {
+    const tray = document.getElementById('dl-tray');
+    if (!tray) return;
+    tray.classList.toggle('collapsed');
+    const btn = document.getElementById('dl-tray-collapse-btn');
+    if (btn) btn.innerText = tray.classList.contains('collapsed') ? '▲' : '▼';
+  }
+
+  function closeAllCompletedDlTasks() {
+    const activeRemaining = Object.values(downloadTasks).some(t => t.status === 'downloading' || t.status === 'queued');
+    if (activeRemaining) {
+      document.getElementById('dl-tray').classList.add('collapsed');
+      const btn = document.getElementById('dl-tray-collapse-btn');
+      if (btn) btn.innerText = '▲';
+    } else {
+      downloadTasks = {};
+      renderDlTray();
+    }
+  }
+
+  function onDownloadTaskAdded(taskInfo) {
+    appendLog(`[Hàng Đợi] Đã thêm [${taskInfo.title}] vào hàng đợi tải.`);
+    downloadTasks[taskInfo.id] = {
+      id: taskInfo.id,
+      title: taskInfo.title,
+      author: taskInfo.author,
+      source: taskInfo.source,
+      img_url: taskInfo.img_url,
+      status: taskInfo.status || 'queued',
+      queue_pos: taskInfo.queue_pos || 1,
+      pct: 0
+    };
+    renderDlTray();
+  }
+
+  function onDownloadTaskStarted(taskId, title) {
+    if (!downloadTasks[taskId]) {
+      downloadTasks[taskId] = { id: taskId, title: title, status: 'downloading', pct: 0 };
+    } else {
+      downloadTasks[taskId].status = 'downloading';
+    }
+    renderDlTray();
+  }
+
+  function onDownloadTaskProgress(taskId, pct, curMb, totMb, speedMb) {
+    if (!downloadTasks[taskId]) return;
+    downloadTasks[taskId].status = 'downloading';
+    downloadTasks[taskId].pct = pct;
+    downloadTasks[taskId].cur = curMb;
+    downloadTasks[taskId].tot = totMb;
+    downloadTasks[taskId].speed = speedMb;
+    renderDlTray();
+  }
+
+  function onDownloadTaskComplete(taskId, cleanName, charFolder) {
+    if (downloadTasks[taskId]) {
+      downloadTasks[taskId].status = 'done';
+      downloadTasks[taskId].pct = 100;
+      downloadTasks[taskId].cleanName = cleanName;
+      downloadTasks[taskId].char = charFolder;
+    }
+    renderDlTray();
+    
+    // Auto update background lists without disrupting the user
+    loadCharacters();
+    if (currentView === 'installed') {
+      loadInstalled(currentCharFolder, '', true);
+    }
+    
+    // Auto cleanup done task after 10s if not closed
+    setTimeout(() => {
+      if (downloadTasks[taskId] && downloadTasks[taskId].status === 'done') {
+        delete downloadTasks[taskId];
+        renderDlTray();
+      }
+    }, 10000);
+  }
+
+  function onDownloadTaskError(taskId, errorMsg) {
+    if (downloadTasks[taskId]) {
+      downloadTasks[taskId].status = 'error';
+      downloadTasks[taskId].error = errorMsg;
+    }
+    renderDlTray();
   }
 
   function downloadMod(modObj, btnEl = null) {
@@ -5336,54 +5540,7 @@ HTML_TEMPLATE = """
       btnEl.style.pointerEvents = 'none';
       btnEl.innerHTML = `<span>⏳ Đã Thêm Hàng Đợi</span>`;
     }
-    showDownloadWidget(modObj.title);
     window.pywebview.api.download_and_install(JSON.stringify(payload));
-  }
-
-  function updateDownloadProgress(pct, cur, tot, speed, queueRemaining = 0) {
-    const w = document.getElementById('dl-widget');
-    if (w && !w.classList.contains('active')) w.className = 'corner-dl-widget active';
-    const queueTxt = queueRemaining > 0 ? ` (Còn ${queueRemaining} mod trong hàng đợi)` : '';
-    document.getElementById('dl-subtitle').innerText = 'Đang tải xuống dữ liệu...' + queueTxt;
-    document.getElementById('dl-bar').style.width = pct + '%';
-    document.getElementById('dl-pct').innerText = pct + '% (' + cur + '/' + tot + ' MB)';
-    document.getElementById('dl-speed').innerText = speed + ' MB/s';
-  }
-
-  function finishDownloadSuccess(name, char, queueRemaining = 0) {
-    const w = document.getElementById('dl-widget');
-    if (w) w.className = 'corner-dl-widget active success';
-    document.getElementById('dl-bar').style.width = '100%';
-    document.getElementById('dl-title').innerText = 'Đã cài đặt: ' + (name || 'Bản mod');
-    if (queueRemaining > 0) {
-      document.getElementById('dl-subtitle').innerText = `Hoàn tất giải nén! Đang tải mod tiếp theo (${queueRemaining} mod còn lại)...`;
-      document.getElementById('dl-speed').innerText = 'Đang nạp tiếp...';
-    } else {
-      document.getElementById('dl-subtitle').innerText = 'Hoàn tất giải nén toàn bộ mod trong hàng đợi.';
-      document.getElementById('dl-speed').innerText = 'Hoàn tất 100%';
-      if (dlWidgetTimeout) clearTimeout(dlWidgetTimeout);
-      dlWidgetTimeout = setTimeout(() => {
-        hideDownloadWidget();
-      }, 4500);
-    }
-    
-    // Auto update background lists without disrupting the user
-    loadCharacters();
-    if (currentView === 'installed') {
-      loadInstalled(currentCharFolder, '', true);
-    }
-  }
-
-  function finishDownloadError(err) {
-    const w = document.getElementById('dl-widget');
-    if (w) w.className = 'corner-dl-widget active error';
-    document.getElementById('dl-title').innerText = 'Lỗi cài đặt mod';
-    document.getElementById('dl-subtitle').innerText = err || 'Không thể tải hoặc giải nén tệp mod.';
-    
-    if (dlWidgetTimeout) clearTimeout(dlWidgetTimeout);
-    dlWidgetTimeout = setTimeout(() => {
-      hideDownloadWidget();
-    }, 6000);
   }
 
   async function submitDirectLink() {
