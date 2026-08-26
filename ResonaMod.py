@@ -9,6 +9,39 @@ Hệ thống quản lý, cấu hình, xử lý xung đột và tối ưu hóa b�
 
 import os
 import sys
+
+class SafeWriter:
+    def __init__(self, target=None):
+        self.target = target
+    def write(self, s):
+        if self.target:
+            try:
+                self.target.write(s)
+            except:
+                pass
+    def flush(self):
+        if self.target:
+            try:
+                self.target.flush()
+            except:
+                pass
+
+if sys.stdout is None:
+    sys.stdout = SafeWriter()
+elif hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='ignore')
+    except:
+        pass
+
+if sys.stderr is None:
+    sys.stderr = SafeWriter()
+elif hasattr(sys.stderr, 'reconfigure'):
+    try:
+        sys.stderr.reconfigure(encoding='utf-8', errors='ignore')
+    except:
+        pass
+
 import io
 import re
 import json
@@ -37,6 +70,8 @@ CACHE_DIR = os.path.join(BASE_DIR, ".cache", "thumbnails")
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 GLOBAL_EVENT_QUEUE = queue.Queue()
+LAST_HEARTBEAT = time.time()
+APP_STARTED = False
 
 
 def pick_folder_dialog(title="Chọn thư mục"):
@@ -3848,6 +3883,10 @@ HTML_TEMPLATE = """
   } catch(e) {}
 
   document.addEventListener('DOMContentLoaded', () => {
+    fetch('/api/heartbeat').catch(() => {});
+    setInterval(() => {
+      fetch('/api/heartbeat').catch(() => {});
+    }, 2000);
     setTimeout(() => {
       window.dispatchEvent(new Event('pywebviewready'));
       if (typeof initApp === 'function') initApp();
@@ -5082,9 +5121,13 @@ class ResonaServerHandler(BaseHTTPRequestHandler):
                         break
                 except (BrokenPipeError, ConnectionResetError):
                     break
-        elif parsed.path == '/api/ping':
+        elif parsed.path in ('/api/ping', '/api/heartbeat'):
+            global LAST_HEARTBEAT, APP_STARTED
+            LAST_HEARTBEAT = time.time()
+            APP_STARTED = True
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
             self.wfile.write(b'{"ok": true}')
         else:
@@ -5114,7 +5157,6 @@ class ResonaServerHandler(BaseHTTPRequestHandler):
                     else:
                         res = func(args)
                 except Exception as e:
-                    print(f"API Error [{method_name}]:", e)
                     res = {"success": False, "error": str(e)}
             else:
                 res = {"success": False, "error": f"Method {method_name} not found"}
@@ -5152,7 +5194,7 @@ def launch_edge_app(url, width=1320, height=880):
             app_exe = p
             break
 
-    profile_dir = os.path.join(os.environ.get("TEMP", os.path.expanduser("~")), "ResonaMod_Profile")
+    profile_dir = os.path.join(os.environ.get("TEMP", os.path.expanduser("~")), "ResonaMod_App_Profile")
     os.makedirs(profile_dir, exist_ok=True)
 
     if app_exe:
@@ -5185,17 +5227,26 @@ def main():
     server_thread.start()
 
     app_url = f"http://127.0.0.1:{port}"
-    print(f"✨ ResonaMod Studio v{APP_VERSION} đang chạy tại: {app_url}")
+    try:
+        print(f"ResonaMod Studio v{APP_VERSION} running at: {app_url}")
+    except:
+        pass
 
     proc = launch_edge_app(app_url, width=1320, height=880)
-    if proc:
-        proc.wait()
-    else:
-        try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            pass
+
+    # Giữ tiến trình chạy mượt mà và tự động thoát khi đóng cửa sổ
+    start_time = time.time()
+    try:
+        while True:
+            time.sleep(1)
+            if APP_STARTED:
+                if time.time() - LAST_HEARTBEAT > 6:
+                    break
+            else:
+                if proc and proc.poll() is not None and (time.time() - start_time > 30):
+                    break
+    except KeyboardInterrupt:
+        pass
 
 
 if __name__ == "__main__":
