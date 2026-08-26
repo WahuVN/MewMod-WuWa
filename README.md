@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/WahuVN/ResonaMod/releases"><img src="https://img.shields.io/badge/Bản_mới_nhất-v1.0.2-38bdf8?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/WahuVN/ResonaMod/releases"><img src="https://img.shields.io/badge/Bản_mới_nhất-v1.0.4-38bdf8?style=flat-square" alt="Version"></a>
   <a href="https://discord.gg/tuRCj47sy"><img src="https://img.shields.io/badge/Discord-Tham_Gia_Giao_Lưu-5865F2?logo=discord&logoColor=white&style=flat-square" alt="Discord"></a>
   <img src="https://img.shields.io/badge/Nền_tảng-Windows_10%2F11_(64--bit)-0284c7?style=flat-square" alt="Platform">
   <a href="./LICENSE"><img src="https://img.shields.io/badge/Giấy_phép-MIT-10b981?style=flat-square" alt="License"></a>
@@ -38,9 +38,10 @@
 | **🛡️ Ngăn Chặn Xung Đột (Smart Anti-Conflict)** | Tự động tắt các mod skin khác của cùng một nhân vật khi bạn kích hoạt mod mới, loại bỏ hoàn toàn hiện tượng vỡ hình đè texture. |
 | **🔧 Tích Hợp Bộ Vá Lỗi (WuWa Mod Fixer)** | Tự động vá Vertex Shader, Derived Hashes, LOD Bias và phục hồi biến dạng Mesh polygon khi game Wuthering Waves cập nhật phiên bản mới. |
 | **🌐 Kho Tải Trực Tuyến Đa Nguồn** | Tìm kiếm và tải mod trực tiếp từ **GameBanana**, **Huihui168**, **NexusMods** hoặc dán link tải nhanh không giới hạn. |
+| **📥 Khay Tải Đa Nhiệm (Multi-Task Queue)** | Quản lý đồng thời nhiều lượt tải mod với thanh tiến trình % và tốc độ MB/s theo thời gian thực cho từng bản mod. |
 | **⌨️ Quản Lý Phím Tắt Phụ Kiện** | Bật/tắt các chi tiết skin (tóc, váy, áo, tất, vũ khí...) và đổi phím bấm trực quan ngay trên giao diện mà không cần chỉnh sửa file `.ini` thủ công. |
 | **🖼️ Chế Độ Làm Mờ An Toàn (Safe Mode)** | Tự động che mờ các hình ảnh mod nhạy cảm (NSFW) khi lướt duyệt, kèm trình xem ảnh phóng to chi tiết trước khi tải. |
-| **🚀 Tự Động Cập Nhật (Auto-Updater)** | Tự động kiểm tra và gửi thông báo khi có phiên bản mới từ GitHub, cập nhật nhanh chóng chỉ với 1 thao tác. |
+| **🚀 Tự Động Cập Nhật (Auto-Updater)** | Tự động kiểm tra và gửi thông báo khi có phiên bản mới từ GitHub, nâng cấp 1-click không phụ thuộc Rate-Limit API. |
 
 ---
 
@@ -48,7 +49,7 @@
 
 ### Dành cho người chơi (Bản Standalone - Khuyên Dùng)
 
-1. Tải bản mới nhất **`ResonaMod-v1.0.2-Standalone.zip`** tại mục **[Releases](https://github.com/WahuVN/ResonaMod/releases)**.
+1. Tải bản mới nhất **`ResonaMod-v1.0.4-Standalone.zip`** tại mục **[Releases](https://github.com/WahuVN/ResonaMod/releases)**.
 2. Giải nén thư mục `ResonaMod` và đặt vào thư mục **`WWMI`** của bạn (hoặc đặt ở bất cứ đâu trên ổ cứng).
 3. Chạy file **`ResonaMod.exe`** (hoặc mở file `1_Mo_ResonaMod.bat`).
 4. **Cách chơi mod**:
